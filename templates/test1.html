@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Maison - Fine Dining</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&amp;family=Lato:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Playfair Display', 'Georgia', 'serif'],
+            sans: ['Lato', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            gold: {
+              50: '#fdfcf7',
+              100: '#f9f5e8',
+              200: '#f1e6c5',
+              300: '#e8d49d',
+              400: '#dbb86d',
+              500: '#c9a047',
+              600: '#b8893a',
+              700: '#996b31',
+              800: '#7c562c',
+              900: '#664728',
+            },
+            cream: '#faf8f3',
+            charcoal: '#2d2d2d',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .fade-in { animation: fadeIn 0.6s ease-out forwards; }
+    .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="root" class="h-full"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // Static Menu Data
+    const menuData = [
+      {
+        id: 1,
+        name: "Truffle Burrata",
+        description: "Creamy burrata with black truffle shavings, aged balsamic, and micro greens",
+        price: 24,
+        ingredients: ["Burrata", "Black Truffle", "Balsamic Glaze", "Micro Greens", "EVOO"],
+        category: "Starters",
+        image: "burrata"
+      },
+      {
+        id: 2,
+        name: "Seared Scallops",
+        description: "Pan-seared diver scallops with cauliflower purée and crispy capers",
+        price: 28,
+        ingredients: ["Diver Scallops", "Cauliflower", "Capers", "Brown Butter", "Lemon"],
+        category: "Starters",
+        image: "scallops"
+      },
+      {
+        id: 3,
+        name: "Beef Tartare",
+        description: "Hand-cut prime beef with quail egg, dijon, cornichons, and crostini",
+        price: 22,
+        ingredients: ["Prime Beef", "Quail Egg", "Dijon", "Cornichons", "Shallots"],
+        category: "Starters",
+        image: "tartare"
+      },
+      {
+        id: 4,
+        name: "Wagyu Ribeye",
+        description: "12oz A5 Japanese Wagyu with bone marrow butter and roasted garlic",
+        price: 145,
+        ingredients: ["A5 Wagyu", "Bone Marrow", "Garlic", "Fleur de Sel", "Fresh Herbs"],
+        category: "Main Courses",
+        image: "wagyu"
+      },
+      {
+        id: 5,
+        name: "Lobster Risotto",
+        description: "Butter-poached Maine lobster with saffron arborio and parmesan foam",
+        price: 58,
+        ingredients: ["Maine Lobster", "Arborio Rice", "Saffron", "Parmesan", "White Wine"],
+        category: "Main Courses",
+        image: "risotto"
+      },
+      {
+        id: 6,
+        name: "Duck Confit",
+        description: "Slow-cooked duck leg with cherry gastrique and pommes sarladaises",
+        price: 42,
+        ingredients: ["Duck Leg", "Cherries", "Potatoes", "Thyme", "Duck Fat"],
+        category: "Main Courses",
+        image: "duck"
+      },
+      {
+        id: 7,
+        name: "Sea Bass en Croûte",
+        description: "Mediterranean sea bass in puff pastry with spinach and champagne sauce",
+        price: 48,
+        ingredients: ["Sea Bass", "Puff Pastry", "Spinach", "Champagne", "Shallots"],
+        category: "Main Courses",
+        image: "seabass"
+      },
+      {
+        id: 8,
+        name: "Chocolate Soufflé",
+        description: "Warm Valrhona chocolate soufflé with vanilla bean crème anglaise",
+        price: 18,
+        ingredients: ["Valrhona Chocolate", "Eggs", "Vanilla Bean", "Cream", "Sugar"],
+        category: "Desserts",
+        image: "souffle"
+      },
+      {
+        id: 9,
+        name: "Crème Brûlée",
+        description: "Classic Tahitian vanilla custard with caramelized sugar crust",
+        price: 14,
+        ingredients: ["Cream", "Tahitian Vanilla", "Eggs", "Sugar", "Madagascar Vanilla"],
+        category: "Desserts",
+        image: "brulee"
+      },
+      {
+        id: 10,
+        name: "Tiramisu",
+        description: "Traditional Italian mascarpone with espresso-soaked savoiardi",
+        price: 16,
+        ingredients: ["Mascarpone", "Espresso", "Savoiardi", "Cocoa", "Marsala"],
+        category: "Desserts",
+        image: "tiramisu"
+      },
+      {
+        id: 11,
+        name: "Vintage Champagne",
+        description: "Dom Pérignon 2012, perfectly aged with notes of citrus and brioche",
+        price: 45,
+        ingredients: ["Chardonnay", "Pinot Noir", "Champagne Region"],
+        category: "Drinks",
+        image: "champagne"
+      },
+      {
+        id: 12,
+        name: "Signature Martini",
+        description: "Grey Goose vodka with dry vermouth and blue cheese stuffed olives",
+        price: 18,
+        ingredients: ["Grey Goose", "Dry Vermouth", "Blue Cheese Olives", "Lemon Twist"],
+        category: "Drinks",
+        image: "martini"
+      },
+      {
+        id: 13,
+        name: "Artisan Coffee",
+        description: "Single-origin Ethiopian pour-over with notes of blueberry and jasmine",
+        price: 8,
+        ingredients: ["Ethiopian Beans", "Filtered Water"],
+        category: "Drinks",
+        image: "coffee"
+      }
+    ];
+
+    const categories = ["Starters", "Main Courses", "Desserts", "Drinks"];
+
+    // SVG Food Illustrations
+    const FoodImage = ({ type, className }) => {
+      const images = {
+        burrata: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <defs>
+              <linearGradient id="plate1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f5f5f5"/>
+                <stop offset="100%" stopColor="#e8e8e8"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="100" cy="110" rx="85" ry="30" fill="#d4d4d4"/>
+            <ellipse cx="100" cy="100" rx="85" ry="30" fill="url(#plate1)"/>
+            <ellipse cx="100" cy="90" rx="70" ry="22" fill="#fefefe"/>
+            <circle cx="100" cy="85" r="35" fill="#fff8e7"/>
+            <ellipse cx="100" cy="80" rx="30" ry="25" fill="#fffdf5"/>
+            <path d="M85 75 Q100 60 115 75" stroke="#3d3d3d" strokeWidth="0.5" fill="none"/>
+            <circle cx="90" cy="72" r="2" fill="#2d2d2d"/>
+            <circle cx="110" cy="72" r="2" fill="#2d2d2d"/>
+            <path d="M60 95 Q65 85 75 90" stroke="#5a8c3a" strokeWidth="2" fill="none"/>
+            <path d="M125 95 Q130 85 140 90" stroke="#5a8c3a" strokeWidth="2" fill="none"/>
+            <path d="M70 100 L130 85" stroke="#4a3728" strokeWidth="1" opacity="0.3"/>
+          </svg>
+        ),
+        scallops: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="120" rx="80" ry="25" fill="#1a1a1a"/>
+            <ellipse cx="100" cy="115" rx="80" ry="25" fill="#2d2d2d"/>
+            <circle cx="65" cy="100" r="22" fill="#f5e6d3"/>
+            <circle cx="65" cy="97" r="18" fill="#faf0e4"/>
+            <circle cx="100" cy="95" r="22" fill="#f5e6d3"/>
+            <circle cx="100" cy="92" r="18" fill="#faf0e4"/>
+            <circle cx="135" cy="100" r="22" fill="#f5e6d3"/>
+            <circle cx="135" cy="97" r="18" fill="#faf0e4"/>
+            <ellipse cx="80" cy="120" rx="20" ry="8" fill="#e8dcc8"/>
+            <circle cx="50" cy="85" r="3" fill="#4a6741"/>
+            <circle cx="150" cy="85" r="3" fill="#4a6741"/>
+          </svg>
+        ),
+        tartare: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="115" rx="75" ry="25" fill="#d4d4d4"/>
+            <ellipse cx="100" cy="110" rx="75" ry="25" fill="#f0f0f0"/>
+            <ellipse cx="100" cy="95" rx="40" ry="30" fill="#8b3a3a"/>
+            <ellipse cx="100" cy="90" rx="38" ry="28" fill="#a84444"/>
+            <ellipse cx="100" cy="70" rx="12" ry="10" fill="#ffd700"/>
+            <circle cx="100" cy="68" r="6" fill="#ff8c00"/>
+            <path d="M55 115 Q60 105 70 110" stroke="#8b7355" strokeWidth="3" fill="none"/>
+            <path d="M130 115 Q135 105 145 110" stroke="#8b7355" strokeWidth="3" fill="none"/>
+          </svg>
+        ),
+        wagyu: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <rect x="20" y="90" width="160" height="50" rx="5" fill="#2d2d2d"/>
+            <rect x="20" y="85" width="160" height="50" rx="5" fill="#3d3d3d"/>
+            <path d="M40 75 Q100 65 160 75 L155 120 Q100 130 45 120 Z" fill="#5c2e2e"/>
+            <path d="M45 80 Q100 72 155 80 L150 115 Q100 123 50 115 Z" fill="#8b4513"/>
+            <path d="M50 85 L60 110" stroke="#e8d4c4" strokeWidth="2" opacity="0.4"/>
+            <path d="M80 82 L85 112" stroke="#e8d4c4" strokeWidth="2" opacity="0.4"/>
+            <path d="M110 80 L115 115" stroke="#e8d4c4" strokeWidth="2" opacity="0.4"/>
+            <path d="M140 82 L145 110" stroke="#e8d4c4" strokeWidth="2" opacity="0.4"/>
+            <circle cx="45" cy="125" r="8" fill="#6b8e23"/>
+            <circle cx="155" cy="125" r="8" fill="#6b8e23"/>
+          </svg>
+        ),
+        risotto: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="115" rx="75" ry="30" fill="#d4d4d4"/>
+            <ellipse cx="100" cy="108" rx="75" ry="30" fill="#e8e8e8"/>
+            <ellipse cx="100" cy="100" rx="65" ry="25" fill="#fff8dc"/>
+            <ellipse cx="100" cy="95" rx="60" ry="22" fill="#fffacd"/>
+            <path d="M60 85 Q70 75 85 80 Q75 90 80 100" fill="#c41e3a" opacity="0.9"/>
+            <path d="M115 80 Q130 75 140 85 Q130 90 125 100" fill="#c41e3a" opacity="0.9"/>
+            <path d="M85 90 Q95 85 105 88" stroke="#ffd700" strokeWidth="1" opacity="0.5"/>
+            <circle cx="95" cy="95" r="2" fill="#228b22"/>
+            <circle cx="105" cy="92" r="2" fill="#228b22"/>
+          </svg>
+        ),
+        duck: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="120" rx="80" ry="25" fill="#d4d4d4"/>
+            <ellipse cx="100" cy="115" rx="80" ry="25" fill="#e8e8e8"/>
+            <ellipse cx="70" cy="95" rx="45" ry="30" fill="#8b4513"/>
+            <ellipse cx="75" cy="90" rx="40" ry="25" fill="#a0522d"/>
+            <ellipse cx="80" cy="85" rx="35" ry="20" fill="#cd853f"/>
+            <circle cx="130" cy="105" r="12" fill="#8b0000"/>
+            <circle cx="145" cy="100" r="10" fill="#8b0000"/>
+            <circle cx="155" cy="108" r="8" fill="#8b0000"/>
+            <rect x="40" y="115" width="30" height="8" rx="2" fill="#ffd700"/>
+            <rect x="45" y="118" width="25" height="5" rx="1" fill="#daa520"/>
+          </svg>
+        ),
+        seabass: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="115" rx="80" ry="28" fill="#d4d4d4"/>
+            <ellipse cx="100" cy="110" rx="80" ry="28" fill="#e8e8e8"/>
+            <ellipse cx="100" cy="90" rx="55" ry="30" fill="#deb887"/>
+            <ellipse cx="100" cy="85" rx="50" ry="25" fill="#f5deb3"/>
+            <path d="M60 80 Q100 60 140 80" stroke="#cd853f" strokeWidth="2" fill="none"/>
+            <circle cx="70" cy="100" r="8" fill="#228b22"/>
+            <circle cx="130" cy="100" r="8" fill="#228b22"/>
+            <path d="M85 75 L90 90 L80 90 Z" fill="#daa520" opacity="0.7"/>
+            <path d="M115 75 L120 90 L110 90 Z" fill="#daa520" opacity="0.7"/>
+          </svg>
+        ),
+        souffle: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="140" rx="45" ry="15" fill="#f5f5f5"/>
+            <path d="M55 140 L55 100 Q55 60 100 50 Q145 60 145 100 L145 140" fill="#4a3728"/>
+            <ellipse cx="100" cy="50" rx="45" ry="20" fill="#5c3d2e"/>
+            <ellipse cx="100" cy="48" rx="40" ry="18" fill="#6b4423"/>
+            <path d="M70 48 Q80 35 90 45" stroke="#3d2817" strokeWidth="1" fill="none"/>
+            <path d="M110 48 Q120 35 130 45" stroke="#3d2817" strokeWidth="1" fill="none"/>
+            <circle cx="85" cy="55" r="3" fill="#8b4513" opacity="0.5"/>
+            <circle cx="115" cy="52" r="3" fill="#8b4513" opacity="0.5"/>
+          </svg>
+        ),
+        brulee: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="130" rx="60" ry="20" fill="#d4d4d4"/>
+            <ellipse cx="100" cy="125" rx="60" ry="20" fill="#e8e8e8"/>
+            <ellipse cx="100" cy="110" rx="55" ry="18" fill="#f5f5f5"/>
+            <ellipse cx="100" cy="105" rx="50" ry="15" fill="#daa520"/>
+            <ellipse cx="100" cy="102" rx="45" ry="12" fill="#cd853f"/>
+            <ellipse cx="100" cy="95" rx="40" ry="10" fill="#fff8dc"/>
+            <path d="M70 100 Q80 92 90 98" stroke="#8b4513" strokeWidth="1" fill="none" opacity="0.5"/>
+            <path d="M110 98 Q120 92 130 100" stroke="#8b4513" strokeWidth="1" fill="none" opacity="0.5"/>
+          </svg>
+        ),
+        tiramisu: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <rect x="50" y="80" width="100" height="70" rx="5" fill="#e8e8e8"/>
+            <rect x="55" y="85" width="90" height="60" fill="#8b4513"/>
+            <rect x="55" y="85" width="90" height="15" fill="#d2691e"/>
+            <rect x="55" y="100" width="90" height="15" fill="#fffaf0"/>
+            <rect x="55" y="115" width="90" height="15" fill="#d2691e"/>
+            <rect x="55" y="130" width="90" height="15" fill="#fffaf0"/>
+            <ellipse cx="100" cy="80" rx="50" ry="10" fill="#4a3728"/>
+            <ellipse cx="100" cy="78" rx="45" ry="8" fill="#5c3d2e"/>
+            <circle cx="80" cy="78" r="2" fill="#3d2817"/>
+            <circle cx="100" cy="76" r="2" fill="#3d2817"/>
+            <circle cx="120" cy="78" r="2" fill="#3d2817"/>
+          </svg>
+        ),
+        champagne: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <path d="M85 180 L80 170 L80 140 L90 80 L90 50 L110 50 L110 80 L120 140 L120 170 L115 180 Z" fill="#e8e8e8"/>
+            <path d="M90 80 L90 50 L110 50 L110 80 L115 140 L85 140 Z" fill="#f5f5dc" opacity="0.6"/>
+            <ellipse cx="100" cy="50" rx="10" ry="5" fill="#f5f5dc"/>
+            <circle cx="95" cy="70" r="2" fill="#fff" opacity="0.7"/>
+            <circle cx="105" cy="85" r="2" fill="#fff" opacity="0.7"/>
+            <circle cx="98" cy="100" r="1.5" fill="#fff" opacity="0.7"/>
+            <circle cx="102" cy="115" r="1.5" fill="#fff" opacity="0.7"/>
+            <ellipse cx="100" cy="175" rx="18" ry="5" fill="#d4d4d4"/>
+          </svg>
+        ),
+        martini: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <path d="M60 60 L100 120 L100 160 L90 165 L110 165 L100 160 L100 120 L140 60 Z" fill="#e8e8e8"/>
+            <path d="M65 65 L100 115 L135 65 Z" fill="#c0c0c0" opacity="0.3"/>
+            <ellipse cx="100" cy="60" rx="40" ry="8" fill="#e8e8e8"/>
+            <ellipse cx="100" cy="58" rx="35" ry="6" fill="#f0f0f0"/>
+            <circle cx="90" cy="80" r="6" fill="#6b8e23"/>
+            <circle cx="90" cy="80" r="3" fill="#8b0000"/>
+            <ellipse cx="100" cy="165" rx="12" ry="4" fill="#d4d4d4"/>
+          </svg>
+        ),
+        coffee: (
+          <svg viewBox="0 0 200 200" className={className}>
+            <ellipse cx="100" cy="145" rx="50" ry="12" fill="#d4d4d4"/>
+            <path d="M55 145 L55 90 Q55 75 70 75 L130 75 Q145 75 145 90 L145 145" fill="#f5f5f5"/>
+            <ellipse cx="100" cy="75" rx="45" ry="12" fill="#f5f5f5"/>
+            <ellipse cx="100" cy="73" rx="40" ry="10" fill="#4a3728"/>
+            <ellipse cx="100" cy="71" rx="35" ry="8" fill="#5c3d2e"/>
+            <path d="M145 95 Q165 95 165 115 Q165 135 145 135" stroke="#d4d4d4" strokeWidth="8" fill="none"/>
+            <path d="M80 60 Q85 45 80 35" stroke="#d4d4d4" strokeWidth="2" fill="none" opacity="0.6"/>
+            <path d="M100 55 Q105 40 100 30" stroke="#d4d4d4" strokeWidth="2" fill="none" opacity="0.6"/>
+            <path d="M120 60 Q125 45 120 35" stroke="#d4d4d4" strokeWidth="2" fill="none" opacity="0.6"/>
+          </svg>
+        )
+      };
+      
+      return images[type] || images.burrata;
+    };
+
+    // Logo Component
+    const Logo = () => (
+      <svg viewBox="0 0 50 50" className="w-10 h-10 md:w-12 md:h-12">
+        <circle cx="25" cy="25" r="23" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gold-600"/>
+        <path d="M15 20 Q25 10 35 20" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gold-600"/>
+        <path d="M15 30 Q25 40 35 30" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gold-600"/>
+        <circle cx="25" cy="25" r="3" fill="currentColor" className="text-gold-600"/>
+      </svg>
+    );
+
+    // Header Component
+    const Header = ({ activeCategory, onCategoryClick, config }) => {
+      const [scrolled, setScrolled] = useState(false);
+
+      useEffect(() => {
+        const handleScroll = () => {
+          setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      return (
+        <header className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? 'bg-white/95 backdrop-blur-md shadow-lg' 
+            : 'bg-cream'
+        }`}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3">
+                <Logo />
+                <div>
+                  <h1 className="font-serif text-xl md:text-2xl font-semibold text-charcoal tracking-wide">
+                    {config.restaurant_name}
+                  </h1>
+                  <p className="text-xs md:text-sm text-gold-600 font-medium tracking-widest uppercase">
+                    {config.tagline}
+                  </p>
+                </div>
+              </div>
+              
+              <nav className="hidden md:flex items-center gap-1">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => onCategoryClick(category)}
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
+                      activeCategory === category
+                        ? 'bg-gold-600 text-white'
+                        : 'text-charcoal hover:bg-gold-100 hover:text-gold-700'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </nav>
+
+              <button className="md:hidden p-2 text-charcoal">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile Navigation */}
+            <nav className="md:hidden pb-4 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 min-w-max">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => onCategoryClick(category)}
+                    className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all duration-300 ${
+                      activeCategory === category
+                        ? 'bg-gold-600 text-white'
+                        : 'bg-white text-charcoal border border-gold-200 hover:border-gold-400'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </nav>
+          </div>
+        </header>
+      );
+    };
+
+    // Food Card Component
+    const FoodCard = ({ item, index }) => {
+      const [isHovered, setIsHovered] = useState(false);
+
+      return (
+        <article
+          className={`group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 fade-in-up stagger-${(index % 4) + 1}`}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          style={{ opacity: 0, animationFillMode: 'forwards' }}
+        >
+          <div className="relative overflow-hidden bg-gradient-to-br from-cream to-gold-50">
+            <div className={`aspect-square p-6 transition-transform duration-500 ${isHovered ? 'scale-105' : 'scale-100'}`}>
+              <FoodImage type={item.image} className="w-full h-full" />
+            </div>
+            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+              <span className="font-serif text-lg font-semibold text-gold-700">${item.price}</span>
+            </div>
+          </div>
+          
+          <div className="p-5 md:p-6">
+            <h3 className="font-serif text-xl md:text-2xl font-semibold text-charcoal mb-2 group-hover:text-gold-700 transition-colors duration-300">
+              {item.name}
+            </h3>
+            
+            <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-4">
+              {item.description}
+            </p>
+            
+            <div className="pt-4 border-t border-gold-100">
+              <p className="text-xs font-medium text-gold-600 uppercase tracking-wider mb-2">Ingredients</p>
+              <div className="flex flex-wrap gap-1.5">
+                {item.ingredients.map((ingredient, idx) => (
+                  <span
+                    key={idx}
+                    className="text-xs px-2.5 py-1 bg-cream text-charcoal rounded-full"
+                  >
+                    {ingredient}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </article>
+      );
+    };
+
+    // Category Section Component
+    const CategorySection = ({ category, items }) => {
+      const categoryIcons = {
+        "Starters": "🍽️",
+        "Main Courses": "🍴",
+        "Desserts": "🍰",
+        "Drinks": "🥂"
+      };
+
+      return (
+        <section id={category.replace(' ', '-').toLowerCase()} className="scroll-mt-32 mb-16 md:mb-20">
+          <div className="flex items-center gap-4 mb-8 md:mb-10">
+            <span className="text-3xl">{categoryIcons[category]}</span>
+            <div className="flex-1">
+              <h2 className="font-serif text-2xl md:text-3xl lg:text-4xl font-semibold text-charcoal">
+                {category}
+              </h2>
+              <div className="h-0.5 w-20 bg-gradient-to-r from-gold-500 to-gold-300 mt-2 rounded-full"></div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {items.map((item, index) => (
+              <FoodCard key={item.id} item={item} index={index} />
+            ))}
+          </div>
+        </section>
+      );
+    };
+
+    // Hero Section Component
+    const HeroSection = ({ config }) => (
+      <section className="relative bg-gradient-to-br from-charcoal via-gray-900 to-charcoal text-white py-16 md:py-24 lg:py-32 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-40 h-40 border border-gold-400 rounded-full"></div>
+          <div className="absolute bottom-10 right-10 w-60 h-60 border border-gold-400 rounded-full"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 border border-gold-400 rounded-full"></div>
+        </div>
+        
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-gold-400 font-medium tracking-widest uppercase text-sm mb-4 fade-in" style={{ opacity: 0, animationFillMode: 'forwards' }}>
+            Welcome to
+          </p>
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-7xl font-bold mb-6 fade-in-up" style={{ opacity: 0, animationFillMode: 'forwards', animationDelay: '0.1s' }}>
+            {config.restaurant_name}
+          </h1>
+          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent mx-auto mb-6 fade-in" style={{ opacity: 0, animationFillMode: 'forwards', animationDelay: '0.2s' }}></div>
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed fade-in-up" style={{ opacity: 0, animationFillMode: 'forwards', animationDelay: '0.3s' }}>
+            Experience culinary excellence with our carefully curated menu, 
+            featuring the finest ingredients and exquisite preparations.
+          </p>
+          
+          <div className="mt-10 flex flex-wrap justify-center gap-6 text-sm fade-in-up" style={{ opacity: 0, animationFillMode: 'forwards', animationDelay: '0.4s' }}>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-gold-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
+              </svg>
+              <span>Tue - Sun: 5PM - 11PM</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-gold-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+              </svg>
+              <span>123 Gourmet Avenue, NYC</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-gold-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+              </svg>
+              <span>+1 (555) 123-4567</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+
+    // Footer Component
+    const Footer = ({ config }) => (
+      <footer className="bg-charcoal text-white py-12 md:py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Logo />
+                <span className="font-serif text-xl font-semibold">{config.restaurant_name}</span>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Where tradition meets innovation. Every dish tells a story of passion, 
+                precision, and the finest ingredients.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-serif text-lg font-semibold mb-4 text-gold-400">Hours</h4>
+              <div className="space-y-2 text-sm text-gray-400">
+                <p>Tuesday - Thursday: 5PM - 10PM</p>
+                <p>Friday - Saturday: 5PM - 11PM</p>
+                <p>Sunday: 4PM - 9PM</p>
+                <p>Monday: Closed</p>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-serif text-lg font-semibold mb-4 text-gold-400">Contact</h4>
+              <div className="space-y-2 text-sm text-gray-400">
+                <p>123 Gourmet Avenue</p>
+                <p>New York, NY 10001</p>
+                <p>reservations@lamaison.com</p>
+                <p>+1 (555) 123-4567</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-12 pt-8 border-t border-gray-800 text-center">
+            <p className="text-sm text-gray-500">
+              © 2024 {config.restaurant_name}. All rights reserved. | Crafted with passion.
+            </p>
+          </div>
+        </div>
+      </footer>
+    );
+
+    // Main App Component
+    const App = () => {
+      const [activeCategory, setActiveCategory] = useState("Starters");
+      const [config, setConfig] = useState({
+        restaurant_name: "La Maison",
+        tagline: "Fine Dining"
+      });
+
+      const defaultConfig = {
+        restaurant_name: "La Maison",
+        tagline: "Fine Dining"
+      };
+
+      useEffect(() => {
+        if (window.elementSdk) {
+          window.elementSdk.init({
+            defaultConfig,
+            onConfigChange: async (newConfig) => {
+              setConfig(prev => ({
+                ...prev,
+                restaurant_name: newConfig.restaurant_name || defaultConfig.restaurant_name,
+                tagline: newConfig.tagline || defaultConfig.tagline
+              }));
+            },
+            mapToCapabilities: (cfg) => ({
+              recolorables: [],
+              borderables: [],
+              fontEditable: undefined,
+              fontSizeable: undefined
+            }),
+            mapToEditPanelValues: (cfg) => new Map([
+              ["restaurant_name", cfg.restaurant_name || defaultConfig.restaurant_name],
+              ["tagline", cfg.tagline || defaultConfig.tagline]
+            ])
+          });
+        }
+      }, []);
+
+      const handleCategoryClick = (category) => {
+        setActiveCategory(category);
+        const element = document.getElementById(category.replace(' ', '-').toLowerCase());
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      };
+
+      const groupedMenu = categories.reduce((acc, category) => {
+        acc[category] = menuData.filter(item => item.category === category);
+        return acc;
+      }, {});
+
+      return (
+        <div className="min-h-full bg-cream">
+          <Header 
+            activeCategory={activeCategory} 
+            onCategoryClick={handleCategoryClick}
+            config={config}
+          />
+          
+          <HeroSection config={config} />
+          
+          <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20">
+            <div className="text-center mb-12 md:mb-16">
+              <p className="text-gold-600 font-medium tracking-widest uppercase text-sm mb-3">Discover</p>
+              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-semibold text-charcoal mb-4">
+                Our Menu
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Each dish is a masterpiece, crafted with locally sourced ingredients 
+                and prepared with meticulous attention to detail.
+              </p>
+            </div>
+
+            {categories.map((category) => (
+              <CategorySection
+                key={category}
+                category={category}
+                items={groupedMenu[category]}
+              />
+            ))}
+          </main>
+          
+          <Footer config={config} />
+        </div>
+      );
+    };
+
+    // Render
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d26513013f5db07',t:'MTc3MTg0NTQ1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

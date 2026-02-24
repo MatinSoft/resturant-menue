@@ -1,0 +1,394 @@
+[
+  {
+    "category": "Uncategorized",
+    "name": "Half Madhbi Chicken",
+    "description": "Half chicken, grilled or roasted, seasoned with traditional spices.",
+    "price_omr": "2.520",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_01_half-madhbi-chicken.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Cucumber With Yogurt",
+    "description": "A light and tangy combination that balances the crispness of cucumbers with the creamy",
+    "price_omr": "0.840",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_02_cucumber-with-yogurt.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Yogurt",
+    "description": "Made with the freshest and highest quality ingredients, packed with probiotics and nutrients,",
+    "price_omr": "0.200",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_03_yogurt.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Spicy Salad",
+    "description": "Salad with a fiery and tangy dressing.",
+    "price_omr": "0.210",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_04_spicy-salad.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Samosa",
+    "description": "Get ready to indulge in the crispy and savory goodness of our freshly made samosas - perfectly",
+    "price_omr": "0.210",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_05_samosa.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "7 Up",
+    "description": "Non-caffeinated soft drink",
+    "price_omr": "0.315",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_06_7-up.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Baba Ghannouj",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": "rydan_images/01_07_baba-ghannouj.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Chips",
+    "description": "",
+    "price_omr": "0.945",
+    "price_on_selection": false,
+    "image_path": "rydan_images/01_08_chips.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Muttabal",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": "rydan_images/01_09_muttabal.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Hummus",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": "rydan_images/01_10_hummus.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Mixed Salad",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": "rydan_images/01_11_mixed-salad.png"
+  },
+  {
+    "category": "Uncategorized",
+    "name": "Grape Leaves",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": null
+  },
+  {
+    "category": "Side Dishes",
+    "name": "Cucumber With Yogurt",
+    "description": "A light and tangy combination that balances the crispness of cucumbers with the creamy",
+    "price_omr": "0.840",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_01_cucumber-with-yogurt.png"
+  },
+  {
+    "category": "Side Dishes",
+    "name": "Kebbeh",
+    "description": "Savory and spiced meat patties, made with bulgur wheat and ground meat",
+    "price_omr": "0.315",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_02_kebbeh.png"
+  },
+  {
+    "category": "Side Dishes",
+    "name": "Samosa",
+    "description": "Get ready to indulge in the crispy and savory goodness of our freshly made samosas - perfectly",
+    "price_omr": "0.210",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_03_samosa.png"
+  },
+  {
+    "category": "Soups",
+    "name": "Chicken Soup",
+    "description": "Warm your soul with chunks of chicken and a rich broth, make perfect comfort food for any day",
+    "price_omr": "0.840",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_04_chicken-soup.png"
+  },
+  {
+    "category": "Main Course",
+    "name": "Half Madhbi Chicken",
+    "description": "Half chicken, grilled or roasted, seasoned with traditional spices.",
+    "price_omr": "2.520",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_05_half-madhbi-chicken.png"
+  },
+  {
+    "category": "Rice",
+    "name": "Peshawar Rice",
+    "description": "Traditional Middle Eastern dish with a blend of flavors and spices known as Matlotha.",
+    "price_omr": "0.945",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_06_peshawar-rice.png"
+  },
+  {
+    "category": "Rice",
+    "name": "Rydan Rice",
+    "description": "A traditional rice dish, seasoned with aromatic spices.",
+    "price_omr": "0.945",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_07_rydan-rice.png"
+  },
+  {
+    "category": "Rice",
+    "name": "1 Charcoal Grilled Chicken",
+    "description": "Seasoned chicken, grilled over charcoal.",
+    "price_omr": "2.625",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_08_1-charcoal-grilled-chicken.png"
+  },
+  {
+    "category": "Rice",
+    "name": "Okra",
+    "description": "Indulge in our irresistible Okra, tender green pods seasoned with tantalizing spices, lightly",
+    "price_omr": "1.050",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_09_okra.png"
+  },
+  {
+    "category": "Rice",
+    "name": "Molokhia",
+    "description": "Treat your taste buds to the hearty and flavorful essence of our authentic Molokhia, expertly",
+    "price_omr": "1.050",
+    "price_on_selection": false,
+    "image_path": "rydan_images/02_10_molokhia.png"
+  },
+  {
+    "category": "Rice",
+    "name": "Mesakaa",
+    "description": "A traditional Middle Eastern dish, it combines a medley of vegetables, herbs, and spices,",
+    "price_omr": "1.000",
+    "price_on_selection": false,
+    "image_path": null
+  },
+  {
+    "category": "Rice",
+    "name": "Spicy Salad",
+    "description": "Salad with a fiery and tangy dressing.",
+    "price_omr": "0.210",
+    "price_on_selection": false,
+    "image_path": null
+  },
+  {
+    "category": "Rice",
+    "name": "Tahini Salad",
+    "description": "A colorful and nutritious medley of crisp greens, juicy cherry tomatoes, and a generous drizzle",
+    "price_omr": "0.210",
+    "price_on_selection": false,
+    "image_path": null
+  },
+  {
+    "category": "Rice",
+    "name": "Cheese Kunafa",
+    "description": "",
+    "price_omr": "1.575",
+    "price_on_selection": false,
+    "image_path": null
+  },
+  {
+    "category": "Desserts",
+    "name": "Cream Caramel",
+    "description": "Blend of caramel and custard, baked to perfection and served chilled for a decadent sweet",
+    "price_omr": "0.945",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_01_cream-caramel.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Umm Ali",
+    "description": "Satisfy your sweet tooth with the heavenly, warm and flaky layers of our traditional Umm Ali, a",
+    "price_omr": "1.050",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_02_umm-ali.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Cream Kunafa",
+    "description": "Layers of golden pastry filled with a rich cream filling, drizzled with sweet syrup, and topped",
+    "price_omr": "1.050",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_03_cream-kunafa.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Nutella Kunafa",
+    "description": "Sweet Middle Eastern pastry with Nutella filling.",
+    "price_omr": "1.365",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_04_nutella-kunafa.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Strawberry Lotus",
+    "description": "A blended drink made with strawberries and Lotus Biscoff.",
+    "price_omr": "0.945",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_05_strawberry-lotus.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Chocolate Lotus",
+    "description": "A dessert made with chocolate and Lotus Biscoff biscuits.",
+    "price_omr": "0.945",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_06_chocolate-lotus.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Honey and Cream fattah",
+    "description": "",
+    "price_omr": "1.890",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_07_honey-and-cream-fattah.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Awar Qalb Juice",
+    "description": "Experience pure refreshment with our Awar Qalb Juice, a blissful blend of sun-kissed oranges,",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_08_awar-qalb-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Pomegranate Juice",
+    "description": "Made from carefully selected, ripe pomegranates, it's a perfect balance of sweet and tangy",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_09_pomegranate-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Cocktail Juice",
+    "description": "Made with a blend of seasonal fruits, it's a healthy and delicious option for breakfast, lunch, or a",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_10_cocktail-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Orange Caps Juice",
+    "description": "Freshly squeezed juice made from oranges.",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_11_orange-caps-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Mango Juice",
+    "description": "Made from the freshest, ripest mangos, carefully selected for the perfect balance of sweetness",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_12_mango-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Strawberry Juice",
+    "description": "Refreshing and delicious, rich in natural vitamins and minerals. Healthy alternative to sugary",
+    "price_omr": "1.050",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_13_strawberry-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Lemon With Mint Juice",
+    "description": "Made with a blend of fresh lemons, mint leaves, and a touch of sweetness, it's a perfect thirst",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_14_lemon-with-mint-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Orange Mixer Juice",
+    "description": "A blend of fresh oranges, offering a sweet and tangy taste.",
+    "price_omr": "1.260",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_15_orange-mixer-juice.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Pepsi - Regular",
+    "description": "A classic carbonated soft drink.",
+    "price_omr": "0.315",
+    "price_on_selection": false,
+    "image_path": "rydan_images/03_16_pepsi-regular.png"
+  },
+  {
+    "category": "Desserts",
+    "name": "Laban",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": "rydan_images/03_17_laban.png"
+  },
+  {
+    "category": "Beverages",
+    "name": "Yogurt",
+    "description": "Made with the freshest and highest quality ingredients, packed with probiotics and nutrients,",
+    "price_omr": "0.200",
+    "price_on_selection": false,
+    "image_path": "rydan_images/04_01_yogurt.png"
+  },
+  {
+    "category": "Beverages",
+    "name": "Fruit Salad",
+    "description": "",
+    "price_omr": null,
+    "price_on_selection": true,
+    "image_path": "rydan_images/04_02_fruit-salad.png"
+  },
+  {
+    "category": "Beverages",
+    "name": "Water",
+    "description": "Stay hydrated and refreshed with our water.",
+    "price_omr": "0.100",
+    "price_on_selection": false,
+    "image_path": "rydan_images/04_03_water.png"
+  },
+  {
+    "category": "Beverages",
+    "name": "Pepsi - Large",
+    "description": "A large serving of Pepsi, a carbonated soft drink.",
+    "price_omr": "0.840",
+    "price_on_selection": false,
+    "image_path": "rydan_images/04_04_pepsi-large.png"
+  },
+  {
+    "category": "Beverages",
+    "name": "Large Mountain Dew",
+    "description": "Soft Drink",
+    "price_omr": "0.840",
+    "price_on_selection": false,
+    "image_path": "rydan_images/04_05_large-mountain-dew.png"
+  },
+  {
+    "category": "Beverages",
+    "name": "7 Up",
+    "description": "Non-caffeinated soft drink",
+    "price_omr": "0.315",
+    "price_on_selection": false,
+    "image_path": "rydan_images/04_06_7-up.png"
+  }
+]

@@ -49,6 +49,11 @@
       };
     </script>
     <style>
+      /* hide scrollbar only on small screens */
+      @media (max-width: 640px) {
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      }
       html {
         scroll-behavior: smooth;
       }
@@ -699,23 +704,15 @@
                       </button>
                     ))}
                   </nav>
-
-                  <button className="md:hidden p-2 text-charcoal dark:text-gold-400">
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 12h16M4 18h16"
-                      />
-                    </svg>
+                  <button
+                    className={`md:hidden px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-300 ${
+                      isDark
+                        ? "bg-gold-700/20 text-gold-300 hover:bg-gold-700/40"
+                        : "bg-gold-100 text-charcoal hover:bg-gold-200"
+                    }`}
+                  >
+                    EN
                   </button>
-
                   {/* ✅ فقط اگر کاربر ادمین باشد، دکمه ورود به حالت ویرایش را نشان بده */}
                   {isAdminUser && (
                     <button
@@ -766,7 +763,7 @@
           <article
             className={`group rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 fade-in-up stagger-${(index % 4) + 1} relative ${
               isDark ? "bg-dark-card" : "bg-white"
-            }`}
+            } flex flex-col h-full`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             style={{ opacity: 0, animationFillMode: "forwards" }}
@@ -787,21 +784,7 @@
                   <FoodImage type={item.image} className="w-full h-full" />
                 </div>
               )}
-            </div>                    
-              <div
-                className={`absolute top-4 right-4 px-3 py-1.5 rounded-full shadow-md ${
-                  isDark
-                    ? "bg-dark-bg/90 backdrop-blur-sm"
-                    : "bg-white/90 backdrop-blur-sm"
-                }`}
-              >
-              <span
-                dir="ltr"
-                className={`font-serif text-lg font-semibold ${isDark ? "text-gold-400" : "text-gold-700"}`}
-              >
-                {Number(item.price).toFixed(3)} OMR
-              </span>                
-              </div>
+            </div>
 
               {/* Admin Controls Overlay */}
               {isAdmin && isHovered && (
@@ -850,15 +833,25 @@
               )}
             </div>
 
-            <div className="p-5 md:p-6">
+            <div className="p-5 md:p-6 flex flex-col flex-1">
+            <div className="flex items-start justify-between gap-4 mb-2">
               <h3
-                className={`font-serif text-xl md:text-2xl font-semibold mb-2 group-hover:text-gold-600 transition-colors duration-300 ${
+                className={`font-serif text-xl md:text-2xl font-semibold group-hover:text-gold-600 transition-colors duration-300 ${
                   isDark ? "text-gold-300" : "text-charcoal"
                 }`}
               >
                 {item.name}
               </h3>
 
+              <span
+                dir="ltr"
+                className={`font-serif text-lg md:text-xl font-semibold whitespace-nowrap ${
+                  isDark ? "text-gold-400" : "text-gold-700"
+                }`}
+              >
+                {Number(item.price).toFixed(3)} OMR
+              </span>
+            </div>
               <p
                 className={`text-sm md:text-base leading-relaxed mb-4 ${
                   isDark ? "text-gray-400" : "text-gray-600"
@@ -909,22 +902,17 @@
         onEditCategory,
         onDeleteCategory,
       }) => {
-        const categoryIcons = {
-          Appetizers: "🍽️",
-          "Main Courses": "🍴",
-          Desserts: "🍰",
-          Beverages: "🥂",
-        };
 
         return (
           <section
             id={category.replace(" ", "-").toLowerCase()}
-            className="scroll-mt-32 mb-16 md:mb-20"
+            className="scroll-mt-32 mb-4 md:mb-20"
           >
-            <div className="flex items-center justify-between gap-4 mb-8 md:mb-10">
-              <div className="flex items-center gap-4 flex-1">
-                <span className="text-3xl">{categoryIcons[category]}</span>
-                <div className="flex-1">
+            <div className="flex items-center justify-between gap-4 mb-4 md:mb-10">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="flex-1">
+                {/* فقط این تکه رو inline-block کردیم تا عرضش اندازه متن بشه */}
+                <div className="inline-block">
                   <div className="flex items-center gap-3">
                     <h2
                       className={`font-serif text-2xl md:text-3xl lg:text-4xl font-semibold ${
@@ -933,6 +921,7 @@
                     >
                       {category}
                     </h2>
+
                     {isAdmin && (
                       <div className="flex gap-2">
                         <button
@@ -954,6 +943,7 @@
                             />
                           </svg>
                         </button>
+
                         <button
                           onClick={() => onDeleteCategory(category)}
                           className="p-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded transition-all duration-200"
@@ -976,11 +966,13 @@
                       </div>
                     )}
                   </div>
-                  <div className="h-0.5 w-20 bg-gradient-to-r from-gold-500 to-gold-300 mt-2 rounded-full"></div>
+
+                  {/* خط زیر عنوان: هم‌عرض کل inline-block (یعنی اندازه متن + دکمه‌ها) */}
+                  <div className="h-0.5 w-full bg-gradient-to-r from-gold-500 to-gold-300 mt-2 rounded-full"></div>
                 </div>
               </div>
+            </div>              {isAdmin && (
 
-              {isAdmin && (
                 <button
                   onClick={() => onAddFood(category)}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
@@ -1007,17 +999,25 @@
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            <div
+              className="
+                flex gap-6 md:gap-8 overflow-x-auto pb-2
+                snap-x snap-mandatory
+                md:grid md:overflow-visible md:pb-0
+                md:grid-cols-2 lg:grid-cols-3 scrollbar-hide
+              "
+            >
               {items.map((item, index) => (
-                <FoodCard
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  isDark={isDark}
-                  isAdmin={isAdmin}
-                  onEdit={onEditFood}
-                  onDelete={onDeleteFood}
-                />
+                <div key={item.id} className="snap-start flex-none w-72 sm:w-80 md:w-auto">
+                  <FoodCard
+                    item={item}
+                    index={index}
+                    isDark={isDark}
+                    isAdmin={isAdmin}
+                    onEdit={onEditFood}
+                    onDelete={onDeleteFood}
+                  />
+                </div>
               ))}
             </div>
           </section>
@@ -1031,7 +1031,7 @@
             isDark
               ? "bg-gradient-to-br from-dark-bg via-dark-surface to-dark-bg"
               : "bg-gradient-to-br from-charcoal via-gray-900 to-charcoal"
-          } text-white`}
+          } text-white hidden md:block`}
         >
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 w-40 h-40 border border-gold-400 rounded-full"></div>
@@ -1124,6 +1124,7 @@
               </div>
             </div>
           </div>
+
         </section>
       );
 
@@ -1202,7 +1203,7 @@
             ingredients: [],
             image: "burrata",
           },
-        );        
+        );
         const [ingredientInput, setIngredientInput] = useState("");
         const [imageFile, setImageFile] = useState(null);
 
@@ -1525,7 +1526,7 @@
             isDark
               ? "bg-dark-surface text-gray-300 border-t border-gold-700/30"
               : "bg-charcoal text-white"
-          }`}
+          } hidden md:block`}
         >
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
@@ -1814,7 +1815,7 @@
             <HeroSection config={config} isDark={isDark} />
 
             <main
-              className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 lg:py-20`}
+              className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-10 lg:py-12`}
             >
               {canAdmin && (
                 <div
@@ -1841,57 +1842,6 @@
                   </p>
                 </div>
               )}
-
-              <div className="text-center mb-12 md:mb-16">
-                <p
-                  className={`font-medium tracking-widest uppercase text-sm mb-3 ${isDark ? "text-gold-400" : "text-gold-600"}`}
-                >
-                  Discover
-                </p>
-                <div className="flex items-center justify-between">
-                  <h2
-                    className={`font-serif text-3xl md:text-4xl lg:text-5xl font-semibold mb-4 ${
-                      isDark ? "text-gold-300" : "text-charcoal"
-                    }`}
-                  >
-                    Our Menu
-                  </h2>
-                  {canAdmin && (
-                    <button
-                      onClick={() => {
-                        setEditingCategory(null);
-                        setCategoryModalOpen(true);
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
-                        isDark
-                          ? "bg-green-700/30 hover:bg-green-700/50 text-green-300 border border-green-700/50"
-                          : "bg-green-100 hover:bg-green-200 text-green-700 border border-green-300"
-                      }`}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      New Category
-                    </button>
-                  )}
-                </div>
-                <p
-                  className={`max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-gray-600"}`}
-                >
-                Each dish is a masterpiece,
-                prepared with the finest locally sourced ingredients and crafted with exceptional attention to detail.
-                </p>
-              </div>
 
               {categoriesState.map((category) => (
                 <CategorySection

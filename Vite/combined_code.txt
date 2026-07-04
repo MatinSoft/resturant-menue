@@ -1,0 +1,3800 @@
+
+================================================================================
+FILE: App.jsx
+PATH: App.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\App.jsx
+================================================================================
+
+import React from "react";
+import postJSON from "./postJSON.jsx";
+import postForm from "./postForm.jsx";
+import initialMenuData, { getLocalizedFood } from "./initialMenuData.jsx";
+import categories, { getCategoryName } from "./categories.jsx";
+import Header from "./Header.jsx";
+import CategorySection from "./CategorySection.jsx";
+import HeroSection from "./HeroSection.jsx";
+import FoodFormModal from "./FoodFormModal.jsx";
+import ViewFoodModal from "./ViewFoodModal.jsx";
+import CategoryFormModal from "./CategoryFormModal.jsx";
+import Footer from "./Footer.jsx";
+import OrderListModal from "./OrderListModal.jsx";
+import { LanguageProvider, useLanguage } from "./i18n/LanguageContext.jsx";
+import translations from "./i18n/translations/index.js";
+import OrderSidebar from "./OrderSidebar.jsx";
+import Toast from "./Toast.jsx";
+
+const { useState, useEffect } = React;
+
+// Main App Component (Inner - with language access)
+const AppContent = () => {
+  const { currentLang, toggleLanguage, isRTL } = useLanguage();
+  const t = translations[currentLang];
+  const [toastData, setToastData] = useState(null);
+
+  useEffect(() => {
+    if (
+      window.__TOAST_DATA__ &&
+      window.__TOAST_DATA__.message &&
+      typeof window.__TOAST_DATA__.message === "string" &&
+      window.__TOAST_DATA__.message.trim() !== "" &&
+      window.__TOAST_DATA__.message.toLowerCase() !== "none"
+    ) {
+      setToastData({
+        message: window.__TOAST_DATA__.message,
+        type: window.__TOAST_DATA__.type || "info",
+      });
+      delete window.__TOAST_DATA__;
+    }
+  }, []);
+
+  const [activeCategory, setActiveCategory] = useState(
+    categories[0]?.name || "المقبلات", // Use the name property
+  );
+
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme-dark");
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
+  const isAdminUser = !!window.__IS_ADMIN_USER__;
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const canAdmin = isAdminUser && isAdminMode;
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const [menuData, setMenuData] = useState(initialMenuData);
+  const [categoriesState, setCategoriesState] = useState(categories);
+
+  // Helper function to get localized menu data
+  const getLocalizedMenuData = (lang) => {
+    return menuData.map((food) => getLocalizedFood(food, lang));
+  };
+
+  // Helper function to get localized categories
+  const getLocalizedCategories = (lang) => {
+    return categoriesState.map((cat) => getCategoryName(cat, lang));
+  };
+
+  // Get localized data based on current language
+  const localizedMenuData = getLocalizedMenuData(currentLang);
+  const localizedCategories = getLocalizedCategories(currentLang);
+
+  // Modals state
+  const [orders, setOrders] = useState([]);
+  const [orderListModalOpen, setOrderListModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [viewFoodModal, setViewFoodModal] = useState(false);
+  const [currentFoodView, setCurrentFoodView] = useState(null);
+  const [foodModalOpen, setFoodModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editingFood, setEditingFood] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [currentCategoryForFood, setCurrentCategoryForFood] = useState(null);
+
+  const [config, setConfig] = useState({
+    restaurant_name: "لا ميزون",
+    tagline: currentLang === "en" ? "Fine Dining" : "تناول فاخر",
+  });
+
+  const defaultConfig = {
+    restaurant_name: "لا ميزون",
+    tagline: currentLang === "en" ? "Fine Dining" : "تناول فاخر",
+  };
+
+  // Apply theme and RTL
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme-dark", JSON.stringify(isDark));
+
+    // Set RTL direction
+    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+  }, [isDark, isRTL]);
+
+  // Update config when language changes
+  useEffect(() => {
+    setConfig((prev) => ({
+      ...prev,
+      tagline: currentLang === "en" ? "Fine Dining" : "تناول فاخر",
+    }));
+  }, [currentLang]);
+
+  // Initialize Element SDK
+  useEffect(() => {
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          setConfig((prev) => ({
+            ...prev,
+            restaurant_name:
+              newConfig.restaurant_name || defaultConfig.restaurant_name,
+            tagline: newConfig.tagline || defaultConfig.tagline,
+          }));
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined,
+        }),
+        mapToEditPanelValues: (cfg) =>
+          new Map([
+            [
+              "restaurant_name",
+              cfg.restaurant_name || defaultConfig.restaurant_name,
+            ],
+            ["tagline", cfg.tagline || defaultConfig.tagline],
+          ]),
+      });
+    }
+  }, []);
+
+  // Add this useEffect in App.jsx, after your other useEffect hooks
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY + 150;
+
+      for (let i = categoriesState.length - 1; i >= 0; i--) {
+        const cat = categoriesState[i];
+        const id = cat.name.replace(/\s+/g, "-").toLowerCase();
+        const el = document.getElementById(id);
+
+        if (el && el.offsetTop <= scrollY) {
+          if (activeCategory !== cat.name) {
+            setActiveCategory(cat.name);
+          }
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [categoriesState, activeCategory]);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest(".user-menu-container")) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showUserMenu]);
+  // Category Management
+  const handleAddCategory = async (categoryName, categoryNameAr = null) => {
+    const name = (categoryName || "").trim();
+    if (!name) return;
+
+    const payload = { name };
+    if (categoryNameAr) {
+      payload.name_ar = categoryNameAr.trim();
+    }
+
+    const resp = await postJSON("/api/category/create/", payload);
+
+    const newCategory = {
+      id: String(categoriesState.length + 1),
+      name: resp.name,
+      name_ar: resp.name_ar || resp.name,
+    };
+    setCategoriesState((prev) => [...prev, newCategory]);
+    setCategoryModalOpen(false);
+    setEditingCategory(null);
+    setCategoryModalOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleEditCategory = async (oldName, newName, newNameAr = null) => {
+    const payload = { old_name: oldName, new_name: newName };
+    if (newNameAr) payload.name_ar = newNameAr.trim();
+
+    const resp = await postJSON("/api/category/update/", payload);
+
+    setCategoriesState((prev) =>
+      prev.map((cat) =>
+        cat.name === oldName
+          ? { ...cat, name: resp.name, name_ar: resp.name_ar || cat.name_ar }
+          : cat,
+      ),
+    );
+
+    setMenuData((prev) =>
+      prev.map((item) =>
+        item.category === oldName
+          ? { ...item, category: resp.name, category_ar: resp.name_ar }
+          : item,
+      ),
+    );
+
+    setCategoryModalOpen(false);
+    setEditingCategory(null);
+  };
+  const handleDeleteCategory = async (categoryName) => {
+    if (!confirm(`${t.admin.deleteConfirm} "${categoryName}"?`)) return;
+
+    await postJSON("/api/category/delete/", { name: categoryName });
+
+    setCategoriesState((prev) =>
+      prev.filter((cat) => cat.name !== categoryName),
+    );
+    setMenuData((prev) =>
+      prev.filter((item) => item.category !== categoryName),
+    );
+  };
+  // Food Management
+  const handleAddFood = (category) => {
+    setCurrentCategoryForFood(category);
+    setEditingFood(null);
+    setFoodModalOpen(true);
+  };
+
+  const handleEditFood = (food) => {
+    // Find the original food from menuData by ID (which has English fields)
+    const originalFood = menuData.find((item) => item.id === food.id) || food;
+    setEditingFood(originalFood);
+    setCurrentCategoryForFood(originalFood.category);
+    setFoodModalOpen(true);
+  };
+  const handleSaveFood = async (
+    formData,
+    newImageFiles,
+    removedImages,
+    finalImages,
+  ) => {
+    if (!formData.category) {
+      alert("You must select a category first");
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append("category", formData.category);
+    fd.append("name", formData.name);
+    fd.append("description", formData.description || "");
+    fd.append("price", formData.price);
+    fd.append("final_price", formData.final_price || formData.price); // اضافه کردن final_price
+    fd.append("discount", formData.discount || 0);
+    fd.append("ingredients", JSON.stringify(formData.ingredients || []));
+    fd.append("existing_images", JSON.stringify(finalImages));
+    fd.append("removed_images", JSON.stringify(removedImages));
+
+    // Add Arabic fields if they exist
+    if (formData.name_ar) fd.append("name_ar", formData.name_ar);
+    if (formData.description_ar)
+      fd.append("description_ar", formData.description_ar);
+    if (formData.ingredients_ar)
+      fd.append(
+        "ingredients_ar",
+        JSON.stringify(formData.ingredients_ar || []),
+      );
+
+    if (newImageFiles && newImageFiles.length > 0) {
+      newImageFiles.forEach((file) => fd.append("images", file));
+    }
+
+    if (editingFood) {
+      fd.append("id", editingFood.id);
+      const resp = await postForm("/api/food/update/", fd);
+      setMenuData((prev) =>
+        prev.map((it) => (it.id === editingFood.id ? resp.food : it)),
+      );
+    } else {
+      const resp = await postForm("/api/food/create/", fd);
+      setMenuData((prev) => [...prev, resp.food]);
+    }
+
+    setFoodModalOpen(false);
+    setEditingFood(null);
+  };
+  const handleDeleteFood = async (foodId) => {
+    if (!confirm(t.admin.deleteConfirm)) return;
+
+    await postJSON("/api/food/delete/", { id: foodId });
+    setMenuData((prev) => prev.filter((item) => item.id !== foodId));
+  };
+
+  const handleThemeToggle = () => {
+    setIsDark((prev) => !prev);
+  };
+
+  // View Food Management
+  const handleViewFood = (food) => {
+    setCurrentFoodView(food);
+    setViewFoodModal(true);
+  };
+
+  const handleOrderFood = (item, quantity) => {
+    setOrders((prevOrders) => {
+      const existingItemIndex = prevOrders.findIndex(
+        (order) => order.id === item.id,
+      );
+
+      if (existingItemIndex !== -1) {
+        const updatedOrders = [...prevOrders];
+        updatedOrders[existingItemIndex] = {
+          ...updatedOrders[existingItemIndex],
+          quantity: quantity,
+        };
+        return updatedOrders;
+      } else {
+        return [...prevOrders, { ...item, quantity }];
+      }
+    });
+  };
+
+  const handleUpdateOrderQuantity = (itemId, newQuantity) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === itemId ? { ...order, quantity: newQuantity } : order,
+      ),
+    );
+  };
+
+  const handleRemoveOrderItem = (itemId) => {
+    setOrders((prevOrders) =>
+      prevOrders.filter((order) => order.id !== itemId),
+    );
+  };
+
+  const handleFinalizeOrder = async () => {
+    if (orders.length === 0) {
+      setToastData({
+        message: t.toast.noOrders, // استفاده از ترجمه
+        type: "warning",
+      });
+      return;
+    }
+
+    // تابع محاسبه قیمت با تخفیف
+    const getDiscountedPrice = (item) => {
+      const price = Number(item.price) || 0;
+      const discount = Number(item.discount) || 0;
+      if (discount > 0) {
+        return price * (1 - discount / 100);
+      }
+      return price;
+    };
+
+    const orderPayload = {
+      items: orders.map((order) => ({
+        id: order.id,
+        name: order.name,
+        quantity: order.quantity,
+        price: order.price,
+        discount: order.discount || 0,
+      })),
+      total_items: orders.reduce((sum, item) => sum + item.quantity, 0),
+      total_amount: orders.reduce(
+        (sum, item) => sum + getDiscountedPrice(item) * item.quantity,
+        0,
+      ),
+    };
+
+    try {
+      const response = await postJSON("/api/order/create/", orderPayload);
+
+      if (response.success) {
+        setToastData({
+          message: t.toast.orderSuccess, // استفاده از ترجمه
+          type: "success",
+        });
+        setOrders([]);
+        setOrderListModalOpen(false);
+      } else {
+        setToastData({
+          message: response.message || t.toast.orderFailed, // استفاده از ترجمه
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error finalizing order:", error);
+      setToastData({
+        message: t.toast.orderError, // استفاده از ترجمه
+        type: "error",
+      });
+    }
+  };
+  const handleOpenOrderList = () => {
+    setOrderListModalOpen(true);
+  };
+
+  const handleAdminToggle = () => {
+    if (!isAdminUser) return;
+    setIsAdminMode((prev) => !prev);
+  };
+
+  // In App.jsx, update handleCategoryClick:
+  const handleCategoryClick = (categoryName) => {
+    setActiveCategory(categoryName);
+    const element = document.getElementById(
+      categoryName.replace(" ", "-").toLowerCase(),
+    );
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+  const handleSaveCategory = (categoryName, categoryNameAr) => {
+    if (editingCategory) {
+      handleEditCategory(editingCategory, categoryName, categoryNameAr);
+    } else {
+      handleAddCategory(categoryName, categoryNameAr);
+    }
+  };
+
+  const groupedMenu = categoriesState.reduce((acc, category) => {
+    acc[category.name] = menuData.filter(
+      (item) => item.category === category.name,
+    );
+    return acc;
+  }, {});
+  // Get localized items for a category based on current language
+  const getLocalizedItems = (categoryName) => {
+    const items = groupedMenu[categoryName] || [];
+    return items.map((item) => getLocalizedFood(item, currentLang));
+  };
+  // Get localized category name for display
+  const getDisplayCategory = (category) => {
+    return getCategoryName(category, currentLang);
+  };
+
+  return (
+    <div
+      className={`min-h-full transition-colors duration-300 ${
+        isDark ? "bg-dark-bg text-white" : "bg-cream text-charcoal"
+      }`}
+    >
+      {toastData &&
+        toastData.message &&
+        typeof toastData.message === "string" &&
+        toastData.message.trim() !== "" &&
+        toastData.message.toLowerCase() !== "none" && (
+          <Toast
+            message={toastData.message}
+            type={toastData.type}
+            onClose={() => setToastData(null)}
+          />
+        )}{" "}
+      <Header
+        activeCategory={activeCategory}
+        onCategoryClick={handleCategoryClick}
+        config={config}
+        isDark={isDark}
+        onThemeToggle={handleThemeToggle}
+        isAdmin={canAdmin}
+        onAdminToggle={handleAdminToggle}
+        isAdminUser={isAdminUser}
+        orders={orders}
+        onOpenOrderList={handleOpenOrderList}
+        t={t}
+        currentLang={currentLang}
+        onLanguageToggle={toggleLanguage}
+      />
+      <HeroSection config={config} isDark={isDark} t={t} />
+      <main className="max-w-6xl mx-auto pl-4 sm:px-6 lg:pl-8 py-2 md:py-10 lg:py-12">
+        {" "}
+        {canAdmin && (
+          <div
+            className={`mb-12 p-6 rounded-2xl border-2 ${
+              isDark
+                ? "bg-blue-900/20 border-blue-700/50 text-blue-200"
+                : "bg-blue-50 border-blue-300 text-blue-700"
+            }`}
+          >
+            <p className="font-medium flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>{" "}
+              {t.admin.warning}
+            </p>
+          </div>
+        )}
+        {/* Add Category Button - Only in Admin Mode */}
+        {canAdmin && (
+          <div className="mb-8 flex justify-end">
+            <button
+              onClick={() => {
+                setEditingCategory(null);
+                setCategoryModalOpen(true);
+              }}
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 ${
+                isDark
+                  ? "bg-gold-700/30 hover:bg-gold-700/50 text-gold-300 border border-gold-700/50"
+                  : "bg-gold-100 hover:bg-gold-200 text-gold-700 border border-gold-300"
+              }`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              {t.admin.addCategory}
+            </button>
+          </div>
+        )}
+        {/* In App.jsx, update the CategorySection rendering: */}
+        {categoriesState.map((category) => (
+          <CategorySection
+            onFoodCardClick={handleViewFood}
+            key={category.id}
+            category={getCategoryName(category, currentLang)}
+            originalCategory={category.name}
+            items={getLocalizedItems(category.name)} // این خط مهم است
+            isDark={isDark}
+            isAdmin={canAdmin}
+            onAddFood={handleAddFood}
+            onEditFood={handleEditFood}
+            onDeleteFood={handleDeleteFood}
+            onEditCategory={() => {
+              setEditingCategory(category);
+              setCategoryModalOpen(true);
+            }}
+            onDeleteCategory={handleDeleteCategory}
+            t={t}
+          />
+        ))}{" "}
+      </main>
+      <FoodFormModal
+        isOpen={foodModalOpen}
+        isDark={isDark}
+        food={editingFood}
+        categories={categoriesState}
+        defaultCategory={currentCategoryForFood}
+        onSave={handleSaveFood}
+        onClose={() => {
+          setFoodModalOpen(false);
+          setEditingFood(null);
+        }}
+        t={t}
+      />
+      <CategoryFormModal
+        isOpen={categoryModalOpen}
+        isDark={isDark}
+        category={editingCategory}
+        onSave={handleSaveCategory}
+        onClose={() => {
+          setCategoryModalOpen(false);
+          setEditingCategory(null);
+        }}
+        t={t}
+      />
+      {currentFoodView ? (
+        <ViewFoodModal
+          isOpen={viewFoodModal}
+          isDark={isDark}
+          item={getLocalizedFood(currentFoodView, currentLang)}
+          quantity={quantity}
+          setQuantity={setQuantity}
+          onOrder={handleOrderFood}
+          onClose={() => {
+            setViewFoodModal(false);
+            setCurrentFoodView(null);
+            setQuantity(1);
+          }}
+          t={t}
+        />
+      ) : null}
+      <OrderListModal
+        isOpen={orderListModalOpen}
+        isDark={isDark}
+        orders={orders}
+        onClose={() => setOrderListModalOpen(false)}
+        onUpdateQuantity={handleUpdateOrderQuantity}
+        onRemoveItem={handleRemoveOrderItem}
+        onFinalizeOrder={handleFinalizeOrder}
+        t={t}
+      />
+      {/* اضافه کردن OrderSidebar */}
+      <OrderSidebar
+        orders={orders}
+        isDark={isDark}
+        onUpdateQuantity={handleUpdateOrderQuantity}
+        onRemoveItem={handleRemoveOrderItem}
+        onFinalizeOrder={handleFinalizeOrder}
+        t={t}
+      />
+      <Footer config={config} isDark={isDark} t={t} />
+    </div>
+  );
+};
+
+// Main App Component (Wrapper with LanguageProvider)
+const App = () => {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
+  );
+};
+
+export default App;
+
+================================================================================
+FILE: CategoryFormModal.jsx
+PATH: CategoryFormModal.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\CategoryFormModal.jsx
+================================================================================
+
+import Modal from "./Modal.jsx";
+import React from "react";
+const { useState, useEffect } = React;
+
+const CategoryFormModal = ({
+  isOpen,
+  isDark,
+  category,
+  onSave,
+  onClose,
+  t,
+}) => {
+  const [categoryName, setCategoryName] = useState(category || "");
+  const [categoryNameAr, setCategoryNameAr] = useState("");
+
+  useEffect(() => {
+    if (category) {
+      setCategoryName(category.name || category);
+      setCategoryNameAr(category.name_ar || "");
+    } else {
+      setCategoryName("");
+      setCategoryNameAr("");
+    }
+  }, [category]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(categoryName, categoryNameAr);
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      title={category ? t.admin.editCategory : t.admin.addCategory}
+      isDark={isDark}
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-4">
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.categoryName} (English)
+          </label>
+          <input
+            type="text"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+            placeholder="Example: Appetizers"
+            className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+              isDark
+                ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+            } focus:outline-none focus:ring-2`}
+            required
+            dir="ltr"
+          />
+        </div>
+
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.categoryName} (العربية)
+          </label>
+          <input
+            type="text"
+            value={categoryNameAr}
+            onChange={(e) => setCategoryNameAr(e.target.value)}
+            placeholder="مثال: المقبلات"
+            className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+              isDark
+                ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+            } focus:outline-none focus:ring-2`}
+            dir="rtl"
+          />
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <button
+            type="submit"
+            className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200"
+          >
+            {category ? t.admin.update : t.admin.save}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+              isDark
+                ? "bg-dark-bg hover:bg-dark-card text-gold-300 border border-gold-700/30"
+                : "bg-gold-100 hover:bg-gold-200 text-charcoal"
+            }`}
+          >
+            {t.admin.cancel}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+export default CategoryFormModal;
+
+================================================================================
+FILE: CategorySection.jsx
+PATH: CategorySection.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\CategorySection.jsx
+================================================================================
+
+import FoodCard from "./FoodCard.jsx";
+
+// Category Section Component
+const CategorySection = ({
+  category,
+  originalCategory,
+  items,
+  isDark,
+  isAdmin,
+  onFoodCardClick,
+  onAddFood,
+  onEditFood,
+  onDeleteFood,
+  onEditCategory,
+  onDeleteCategory,
+  t,
+}) => {
+  const categoryId = (originalCategory || category)
+    .replace(" ", "-")
+    .toLowerCase();
+  return (
+    <section id={categoryId} className="scroll-mt-32 mb-4 md:mb-20">
+      <div className="flex items-center justify-between gap-4 mb-4 md:mb-10">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex-1">
+            {/* فقط این تکه رو inline-block کردیم تا عرضش اندازه متن بشه */}
+            <div className="inline-block">
+              <div className="flex items-center gap-3">
+                <h2
+                  className={`font-serif text-2xl md:text-3xl lg:text-4xl font-semibold ${
+                    isDark ? "text-gold-300" : "text-charcoal"
+                  }`}
+                >
+                  {category}
+                </h2>
+
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() =>
+                        onEditCategory(originalCategory || category)
+                      }
+                      className="p-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded transition-all duration-200"
+                      title="Edit Category"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        onDeleteCategory(originalCategory || category)
+                      }
+                      className="p-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded transition-all duration-200"
+                      title="Delete Category"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* خط زیر عنوان: هم‌عرض کل inline-block (یعنی اندازه متن + دکمه‌ها) */}
+              <div className="h-0.5 w-full bg-gradient-to-r from-gold-500 to-gold-300 mt-2 rounded-full"></div>
+            </div>
+          </div>
+        </div>{" "}
+        {isAdmin && (
+          <button
+            onClick={() => onAddFood(originalCategory || category)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
+              isDark
+                ? "bg-green-700/30 hover:bg-green-700/50 text-green-300 border border-green-700/50"
+                : "bg-green-100 hover:bg-green-200 text-green-700 border border-green-300"
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            {t.admin.addFood}{" "}
+          </button>
+        )}
+      </div>
+
+      <div
+        className="
+                flex gap-6 md:gap-8 overflow-x-auto pb-2
+                snap-x snap-mandatory
+                md:grid md:overflow-visible md:pb-0
+                md:grid-cols-2 lg:grid-cols-3 scrollbar-hide
+              "
+      >
+        {items.map((item, index) => (
+          <div
+            key={item.id}
+            className="snap-start flex-none w-72 sm:w-80 md:w-auto"
+          >
+            <FoodCard
+              item={item}
+              index={index}
+              isDark={isDark}
+              isAdmin={isAdmin}
+              onImageClick={onFoodCardClick}
+              onEdit={onEditFood}
+              onDelete={onDeleteFood}
+              t={t}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+export default CategorySection;
+
+================================================================================
+FILE: FoodCard.jsx
+PATH: FoodCard.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\FoodCard.jsx
+================================================================================
+
+import FoodImage from "./FoodImage.jsx";
+import React from "react";
+const { useState } = React;
+
+const FoodCard = ({
+  item,
+  index,
+  isDark,
+  isAdmin,
+  onEdit,
+  onImageClick,
+  onDelete,
+  t,
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Function to format price
+  const formatPrice = (price) => {
+    if (price === null || price === undefined || price === "") return "0.000";
+    return Number(price).toFixed(3);
+  };
+
+  // Get final price - همیشه از final_price استفاده کن
+  const getFinalPrice = () => {
+    // اولویت با final_price است
+    if (
+      item.final_price !== undefined &&
+      item.final_price !== null &&
+      item.final_price !== "" &&
+      Number(item.final_price) >= 0
+    ) {
+      return Number(item.final_price);
+    }
+
+    // اگر final_price وجود نداشت، از discount محاسبه کن
+    const price = Number(item.price) || 0;
+    const discount = Number(item.discount) || 0;
+
+    if (discount > 0 && discount <= 100) {
+      return price * (1 - discount / 100);
+    }
+
+    return price;
+  };
+
+  const finalPrice = getFinalPrice();
+  const originalPrice = Number(item.price) || 0;
+  const hasDiscount = finalPrice < originalPrice;
+  const discountPercent = item.discount || 0;
+
+  return (
+    <article
+      className={`group rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 fade-in-up stagger-${(index % 4) + 1} relative ${
+        isDark ? "bg-dark-card" : "bg-white"
+      } flex flex-col h-full`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ opacity: 0, animationFillMode: "forwards" }}
+    >
+      <div
+        className={`relative overflow-hidden ${isDark ? "bg-dark-surface" : "bg-gradient-to-br from-cream to-gold-50"}`}
+      >
+        <div
+          className={`aspect-square transition-transform duration-500 ${isHovered ? "scale-105" : "scale-100"}`}
+          onClick={() => onImageClick(item)}
+        >
+          {item.images?.[0] ? (
+            <img
+              src={item.images[0]}
+              alt={item.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="p-6 w-full h-full">
+              <FoodImage type={item.image} className="w-full h-full" />
+            </div>
+          )}
+        </div>
+
+        {isAdmin && isHovered && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center gap-3 admin-overlay">
+            <button
+              onClick={() => onEdit(item)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+              title={t.admin.editFood}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              {t.admin.editFood}
+            </button>
+            <button
+              onClick={() => onDelete(item.id)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+              title={t.admin.deleteFood}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              {t.admin.deleteFood}
+            </button>
+          </div>
+        )}
+
+        {/* نمایش درصد تخفیف روی تصویر */}
+        {discountPercent > 0 && (
+          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold">
+            -{Math.round(discountPercent)}%
+          </div>
+        )}
+      </div>
+
+      <div className="p-5 md:p-6 flex flex-col flex-1">
+        <div className="flex flex-col items-start justify-between gap-4 mb-2">
+          <h3
+            className={`font-serif text-xl md:text-2xl font-semibold group-hover:text-gold-600 transition-colors duration-300 ${
+              isDark ? "text-gold-300" : "text-charcoal"
+            }`}
+          >
+            {item.name}
+          </h3>
+        </div>
+        <p
+          className={`text-sm md:text-base line-clamp-2 leading-normal mb-2 ${
+            isDark ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          {item.description}
+        </p>
+
+        {/* نمایش قیمت */}
+        <div className="mb-2">
+          {hasDiscount ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                dir="ltr"
+                className="font-serif text-sm md:text-base font-semibold whitespace-nowrap text-gray-500 line-through"
+              >
+                {formatPrice(originalPrice)}
+              </span>
+              <span
+                dir="ltr"
+                className={`font-serif text-lg md:text-xl font-semibold whitespace-nowrap ${
+                  isDark ? "text-gold-400" : "text-gold-700"
+                }`}
+              >
+                {formatPrice(finalPrice)} {t.food.price}
+              </span>
+            </div>
+          ) : (
+            <span
+              dir="ltr"
+              className={`font-serif text-lg md:text-xl font-semibold whitespace-nowrap ${
+                isDark ? "text-gold-400" : "text-gold-700"
+              }`}
+            >
+              {formatPrice(finalPrice)} {t.food.price}
+            </span>
+          )}
+        </div>
+
+        <div
+          className={`pt-2 border-t ${isDark ? "border-gold-700/30" : "border-gold-100"}`}
+        >
+          <p
+            className={`text-xs font-medium uppercase tracking-wider mb-2 ${
+              isDark ? "text-gold-400" : "text-gold-600"
+            }`}
+          >
+            {t.food.ingredients}
+          </p>
+          <div className="flex flex-wrap gap-1.5 overflow-hidden max-h-7">
+            {item.ingredients &&
+              item.ingredients.map((ingredient, idx) => (
+                <span
+                  key={idx}
+                  className={`text-xs px-2.5 py-1 rounded-full ${
+                    isDark
+                      ? "bg-dark-surface text-gold-300"
+                      : "bg-cream text-charcoal"
+                  }`}
+                >
+                  {ingredient}
+                </span>
+              ))}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+export default FoodCard;
+
+================================================================================
+FILE: FoodFormModal.jsx
+PATH: FoodFormModal.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\FoodFormModal.jsx
+================================================================================
+
+import Modal from "./Modal.jsx";
+import React from "react";
+const { useState, useEffect } = React;
+
+const FoodFormModal = ({
+  isOpen,
+  isDark,
+  food,
+  categories,
+  defaultCategory,
+  onSave,
+  onClose,
+  t,
+}) => {
+  const [formData, setFormData] = useState(
+    food || {
+      name: "",
+      name_ar: "",
+      description: "",
+      description_ar: "",
+      price: "",
+      final_price: "",
+      category: defaultCategory || categories[0]?.name || "",
+      ingredients: [],
+      ingredients_ar: [],
+      images: [],
+    },
+  );
+  const [ingredientInput, setIngredientInput] = useState("");
+  const [ingredientArInput, setIngredientArInput] = useState("");
+  const [existingImages, setExistingImages] = useState([]);
+  const [newImageFiles, setNewImageFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [removedImages, setRemovedImages] = useState([]);
+
+  // Calculate discount percentage
+  const calculateDiscount = () => {
+    const price = parseFloat(formData.price);
+    const finalPrice = parseFloat(formData.final_price);
+    if (price && finalPrice && price > 0 && finalPrice < price) {
+      const discount = ((price - finalPrice) / price) * 100;
+      return Math.round(discount);
+    }
+    return 0;
+  };
+
+  useEffect(() => {
+    if (food) {
+      setFormData({
+        ...food,
+        name: food.name || "",
+        name_ar: food.name_ar || "",
+        description: food.description || "",
+        description_ar: food.description_ar || "",
+        price: food.price ? String(food.price) : "",
+        final_price: food.final_price ? String(food.final_price) : "",
+        category: food.category || defaultCategory || categories[0]?.name || "",
+        ingredients: food.ingredients || [],
+        ingredients_ar: food.ingredients_ar || [],
+        images: food.images || [],
+      });
+      setExistingImages(food.images || []);
+      setIngredientInput("");
+      setIngredientArInput("");
+      setNewImageFiles([]);
+      setPreviewUrls([]);
+      setRemovedImages([]);
+    } else {
+      setFormData({
+        name: "",
+        name_ar: "",
+        description: "",
+        description_ar: "",
+        price: "",
+        final_price: "",
+        category: defaultCategory || categories[0]?.name || "",
+        ingredients: [],
+        ingredients_ar: [],
+        images: [],
+      });
+      setExistingImages([]);
+      setIngredientInput("");
+      setIngredientArInput("");
+      setNewImageFiles([]);
+      setPreviewUrls([]);
+      setRemovedImages([]);
+    }
+  }, [food, defaultCategory, categories]);
+
+  // Handle price change
+  const handlePriceChange = (value) => {
+    setFormData({ ...formData, price: value });
+  };
+
+  // Handle final price change
+  const handleFinalPriceChange = (value) => {
+    setFormData({ ...formData, final_price: value });
+  };
+
+  const handleAddIngredient = (isArabic = false) => {
+    if (isArabic) {
+      if (ingredientArInput.trim()) {
+        setFormData((prev) => ({
+          ...prev,
+          ingredients_ar: [...prev.ingredients_ar, ingredientArInput.trim()],
+        }));
+        setIngredientArInput("");
+      }
+    } else {
+      if (ingredientInput.trim()) {
+        setFormData((prev) => ({
+          ...prev,
+          ingredients: [...prev.ingredients, ingredientInput.trim()],
+        }));
+        setIngredientInput("");
+      }
+    }
+  };
+
+  const handleRemoveIngredient = (index, isArabic = false) => {
+    if (isArabic) {
+      setFormData((prev) => ({
+        ...prev,
+        ingredients_ar: prev.ingredients_ar.filter((_, i) => i !== index),
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        ingredients: prev.ingredients.filter((_, i) => i !== index),
+      }));
+    }
+  };
+
+  const handleAddImages = (e) => {
+    const files = Array.from(e.target.files);
+    setNewImageFiles((prev) => [...prev, ...files]);
+
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...urls]);
+  };
+
+  const handleRemoveNewImage = (index) => {
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(previewUrls[index]);
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveExistingImage = (index) => {
+    const removedImage = existingImages[index];
+    setRemovedImages((prev) => [...prev, removedImage]);
+    setExistingImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // محاسبه درصد تخفیف از روی قیمت‌ها
+    const price = parseFloat(formData.price) || 0;
+    const finalPriceValue = parseFloat(formData.final_price) || 0;
+    let discount = 0;
+
+    if (price > 0 && finalPriceValue > 0 && finalPriceValue < price) {
+      discount = Math.round(((price - finalPriceValue) / price) * 100);
+    }
+
+    const finalImages = [...existingImages];
+
+    // ارسال مقادیر صحیح - هم final_price و هم discount رو می‌فرستیم
+    const formDataWithDiscount = {
+      ...formData,
+      discount: discount,
+      price: price,
+      final_price: finalPriceValue > 0 ? finalPriceValue : price, // همیشه final_price رو بفرست
+    };
+
+    onSave(formDataWithDiscount, newImageFiles, removedImages, finalImages);
+  };
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      title={food ? t.admin.editFood : t.admin.addFood}
+      isDark={isDark}
+      onClose={onClose}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="p-6 md:px-8 space-y-4 border-t border-gold-300"
+      >
+        {/* بخش تصاویر */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.images}
+          </label>
+
+          {/* نمایش تصاویر موجود */}
+          {existingImages.length > 0 && (
+            <div className="mb-4">
+              <p
+                className={`text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+              >
+                {t.admin.currentImages}:
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {existingImages.map((url, idx) => (
+                  <div key={idx} className="relative group">
+                    <img
+                      src={url}
+                      alt={`existing ${idx}`}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(idx)}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* نمایش تصاویر جدید + دکمه آپلود */}
+          {previewUrls.length > 0 ? (
+            <div className="mb-4">
+              <p
+                className={`text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+              >
+                {t.admin.newImages}:
+              </p>
+              <div className="flex gap-2">
+                {previewUrls.map((url, idx) => (
+                  <div key={idx} className="relative group flex-shrink-0">
+                    <img
+                      src={url}
+                      alt={`preview ${idx}`}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNewImage(idx)}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+
+                {/* دکمه آپلود کنار آخرین تصویر */}
+                <div
+                  className={`w-20 h-20 flex-shrink-0 flex items-center justify-center rounded-lg border-2 border-dashed cursor-pointer transition-all duration-200 hover:border-gold-500 hover:bg-gold-500/10 ${
+                    isDark
+                      ? "border-gold-700/50 text-gold-400 hover:text-gold-300"
+                      : "border-gold-300 text-gold-600 hover:text-gold-500"
+                  }`}
+                  onClick={() =>
+                    document.getElementById("image-upload").click()
+                  }
+                >
+                  <svg
+                    className="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* اگر هیچ تصویر جدیدی نیست، فقط دکمه آپلود */
+            <div className="mb-4">
+              <div
+                className={`w-20 h-20 flex items-center justify-center rounded-lg border-2 border-dashed cursor-pointer transition-all duration-200 hover:border-gold-500 hover:bg-gold-500/10 ${
+                  isDark
+                    ? "border-gold-700/50 text-gold-400 hover:text-gold-300"
+                    : "border-gold-300 text-gold-600 hover:text-gold-500"
+                }`}
+                onClick={() => document.getElementById("image-upload").click()}
+              >
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* input مخفی برای آپلود */}
+          <input
+            id="image-upload"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleAddImages}
+            className="hidden"
+          />
+
+          <p
+            className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+          >
+            {t.admin.imageHint}
+          </p>
+        </div>
+
+        {/* English Name & Arabic Name */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label
+              className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+            >
+              {t.admin.foodName} (English)
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark
+                  ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                  : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+              } focus:outline-none focus:ring-2`}
+              required
+              dir="ltr"
+            />
+          </div>
+
+          <div>
+            <label
+              className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+            >
+              {t.admin.foodName} (العربية)
+            </label>
+            <input
+              type="text"
+              value={formData.name_ar}
+              onChange={(e) =>
+                setFormData({ ...formData, name_ar: e.target.value })
+              }
+              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark
+                  ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                  : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+              } focus:outline-none focus:ring-2`}
+              dir="rtl"
+            />
+          </div>
+        </div>
+
+        {/* انتخاب دسته‌بندی */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.selectCategory}
+          </label>
+          <select
+            value={formData.category}
+            onChange={(e) =>
+              setFormData({ ...formData, category: e.target.value })
+            }
+            className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+              isDark
+                ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+            } focus:outline-none focus:ring-2`}
+          >
+            {categories.map((cat) => (
+              <option key={cat.id || cat.name} value={cat.name}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* توضیحات انگلیسی */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.description} (English)
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 h-24 resize-none ${
+              isDark
+                ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+            } focus:outline-none focus:ring-2`}
+            dir="ltr"
+          />
+        </div>
+
+        {/* توضیحات عربی */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.description} (العربية)
+          </label>
+          <textarea
+            value={formData.description_ar}
+            onChange={(e) =>
+              setFormData({ ...formData, description_ar: e.target.value })
+            }
+            className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 h-24 resize-none ${
+              isDark
+                ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+            } focus:outline-none focus:ring-2`}
+            dir="rtl"
+          />
+        </div>
+
+        {/* قیمت اولیه و قیمت نهایی */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label
+              className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+            >
+              {t.admin.originalPrice || "Original Price"}
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              value={formData.price}
+              onChange={(e) => handlePriceChange(e.target.value)}
+              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark
+                  ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                  : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+              } focus:outline-none focus:ring-2`}
+              required
+            />
+          </div>
+          <div>
+            <label
+              className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+            >
+              {t.admin.finalPrice || "Final Price"}
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              value={formData.final_price}
+              onChange={(e) => handleFinalPriceChange(e.target.value)}
+              className={`w-full px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark
+                  ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                  : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+              } focus:outline-none focus:ring-2`}
+              required
+            />
+          </div>
+        </div>
+
+        {/* نمایش درصد تخفیف (غیرفعال) */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.discountPercent || "Discount Percentage"}
+          </label>
+          <input
+            type="number"
+            value={calculateDiscount()}
+            disabled
+            className={`w-full px-4 py-2 rounded-lg border bg-gray-100 cursor-not-allowed ${
+              isDark
+                ? "bg-dark-bg/50 border-gold-700/30 text-gold-400"
+                : "bg-gray-100 border-gold-200 text-gray-600"
+            }`}
+          />
+          <p
+            className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+          >
+            {t.admin.discountAutoCalc || "Automatically calculated from prices"}
+          </p>
+        </div>
+
+        {/* مواد اولیه انگلیسی */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.ingredients} (English)
+          </label>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={ingredientInput}
+              onChange={(e) => setIngredientInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddIngredient(false);
+                }
+              }}
+              placeholder={t.admin.addIngredient}
+              className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark
+                  ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                  : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+              } focus:outline-none focus:ring-2`}
+              dir="ltr"
+            />
+            <button
+              type="button"
+              onClick={() => handleAddIngredient(false)}
+              className="px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-medium transition-all duration-200"
+            >
+              {t.common.add}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {formData.ingredients.map((ing, idx) => (
+              <div
+                key={idx}
+                className={`px-3 py-1 rounded-full flex items-center gap-2 ${
+                  isDark ? "bg-dark-bg text-gold-300" : "bg-cream text-charcoal"
+                }`}
+              >
+                {ing}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveIngredient(idx, false)}
+                  className="hover:text-red-500"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* مواد اولیه عربی */}
+        <div>
+          <label
+            className={`block text-sm font-medium mb-2 ${isDark ? "text-gold-300" : "text-gray-700"}`}
+          >
+            {t.admin.ingredients} (العربية)
+          </label>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={ingredientArInput}
+              onChange={(e) => setIngredientArInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddIngredient(true);
+                }
+              }}
+              placeholder={t.admin.addIngredient}
+              className={`flex-1 px-4 py-2 rounded-lg border transition-all duration-300 ${
+                isDark
+                  ? "bg-dark-bg border-gold-700/30 text-white focus:border-gold-500 focus:ring-gold-500/20"
+                  : "bg-white border-gold-200 text-charcoal focus:border-gold-500 focus:ring-gold-500/20"
+              } focus:outline-none focus:ring-2`}
+              dir="rtl"
+            />
+            <button
+              type="button"
+              onClick={() => handleAddIngredient(true)}
+              className="px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-medium transition-all duration-200"
+            >
+              {t.common.add}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {formData.ingredients_ar.map((ing, idx) => (
+              <div
+                key={idx}
+                className={`px-3 py-1 rounded-full flex items-center gap-2 ${
+                  isDark ? "bg-dark-bg text-gold-300" : "bg-cream text-charcoal"
+                }`}
+              >
+                {ing}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveIngredient(idx, true)}
+                  className="hover:text-red-500"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* دکمه‌های ذخیره و لغو */}
+        <div className="flex gap-3 pt-4">
+          <button
+            type="submit"
+            className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200"
+          >
+            {food ? t.admin.update : t.admin.save}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+              isDark
+                ? "bg-dark-bg hover:bg-dark-card text-gold-300 border border-gold-700/30"
+                : "bg-gold-100 hover:bg-gold-200 text-charcoal"
+            }`}
+          >
+            {t.admin.cancel}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+export default FoodFormModal;
+
+================================================================================
+FILE: FoodImage.jsx
+PATH: FoodImage.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\FoodImage.jsx
+================================================================================
+
+// SVG Food Illustrations
+const FoodImage = ({ type, className }) => {
+  const images = {
+    burrata: (
+      <svg viewBox="0 0 200 200" className={className}>
+        <defs>
+          <linearGradient id="plate1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#f5f5f5" />
+            <stop offset="100%" stopColor="#e8e8e8" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="100" cy="110" rx="85" ry="30" fill="#d4d4d4" />
+        <ellipse cx="100" cy="100" rx="85" ry="30" fill="url(#plate1)" />
+        <ellipse cx="100" cy="90" rx="70" ry="22" fill="#fefefe" />
+        <circle cx="100" cy="85" r="35" fill="#fff8e7" />
+        <ellipse cx="100" cy="80" rx="30" ry="25" fill="#fffdf5" />
+        <path
+          d="M85 75 Q100 60 115 75"
+          stroke="#3d3d3d"
+          strokeWidth="0.5"
+          fill="none"
+        />
+        <circle cx="90" cy="72" r="2" fill="#2d2d2d" />
+        <circle cx="110" cy="72" r="2" fill="#2d2d2d" />
+        <path
+          d="M60 95 Q65 85 75 90"
+          stroke="#5a8c3a"
+          strokeWidth="2"
+          fill="none"
+        />
+        <path
+          d="M125 95 Q130 85 140 90"
+          stroke="#5a8c3a"
+          strokeWidth="2"
+          fill="none"
+        />
+        <path
+          d="M70 100 L130 85"
+          stroke="#4a3728"
+          strokeWidth="1"
+          opacity="0.3"
+        />
+      </svg>
+    ),
+  };
+
+  return images.burrata;
+};
+
+export default FoodImage;
+
+================================================================================
+FILE: Footer.jsx
+PATH: Footer.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\Footer.jsx
+================================================================================
+
+import Logo from "./Logo.jsx";
+
+const Footer = ({ config, isDark, t }) => (
+  <footer
+    className={`transition-colors duration-300 py-12 md:py-16 ${
+      isDark
+        ? "bg-dark-surface text-gray-300 border-t border-gold-700/30"
+        : "bg-charcoal text-white"
+    } hidden md:block`}
+  >
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <Logo />
+            <span className="font-serif text-xl font-semibold">
+              {config.restaurant_name}
+            </span>
+          </div>
+          <p
+            className={`text-sm leading-relaxed ${isDark ? "text-gray-400" : "text-gray-400"}`}
+          >
+            {t.footer.about}
+          </p>
+        </div>
+
+        <div>
+          <h4
+            className={`font-serif text-lg font-semibold mb-4 ${isDark ? "text-gold-400" : "text-gold-400"}`}
+          >
+            {t.footer.openingHours}
+          </h4>
+          <div
+            className={`space-y-2 text-sm ${isDark ? "text-gray-400" : "text-gray-400"}`}
+          >
+            <p>Tuesday - Thursday: 5:00 PM - 10:00 PM</p>
+            <p>Friday - Saturday: 5:00 PM - 11:00 PM</p>
+            <p>Sunday: 4:00 PM - 9:00 PM</p>
+            <p>Monday: Closed</p>
+          </div>
+        </div>
+
+        <div>
+          <h4
+            className={`font-serif text-lg font-semibold mb-4 ${isDark ? "text-gold-400" : "text-gold-400"}`}
+          >
+            {t.footer.contact}
+          </h4>
+          <div
+            className={`space-y-2 text-sm ${isDark ? "text-gray-400" : "text-gray-400"}`}
+          >
+            <p>{t.footer.address}</p>
+            <p>{t.footer.city}</p>
+            <p>{t.footer.email}</p>
+            <p>{t.hero.phone}</p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`mt-12 pt-8 border-t text-center ${isDark ? "border-gold-700/30 text-gray-500" : "border-gray-800 text-gray-500"}`}
+      >
+        <p className="text-sm">
+          © 2024 {config.restaurant_name}. {t.footer.rights}
+        </p>
+      </div>
+    </div>
+  </footer>
+);
+
+export default Footer;
+
+================================================================================
+FILE: Header.jsx
+PATH: Header.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\Header.jsx
+================================================================================
+
+import Logo from "./Logo.jsx";
+import OrderBadge from "./OrderBadge.jsx";
+import React from "react";
+import categories, { getCategoryName } from "./categories.jsx";
+import { languages } from "./i18n/LanguageContext.jsx";
+
+const { useState, useEffect } = React;
+
+const Header = ({
+  activeCategory,
+  onCategoryClick,
+  config,
+  isDark,
+  onThemeToggle,
+  isAdmin,
+  onAdminToggle,
+  isAdminUser,
+  orders,
+  onOpenOrderList,
+  t,
+  currentLang,
+  onLanguageToggle,
+}) => {
+  const [scrolled, setScrolled] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest(".user-menu-container")) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showUserMenu]);
+
+  // Get localized categories for navigation
+  const localizedCategories = categories.map((cat) =>
+    getCategoryName(cat, currentLang),
+  );
+
+  // Get localized active category
+  const localizedActiveCategory = getCategoryName(activeCategory, currentLang);
+
+  return (
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isDark
+          ? scrolled
+            ? "bg-dark-surface/95 backdrop-blur-md shadow-lg border-b border-gold-700/30"
+            : "bg-dark-bg"
+          : scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-lg"
+            : "bg-cream"
+      }`}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <Logo />
+            <div>
+              <h1
+                className={`font-serif text-xl md:text-2xl font-semibold tracking-wide ${
+                  isDark ? "text-gold-400" : "text-charcoal"
+                }`}
+              >
+                {config.restaurant_name}
+              </h1>
+              <p className="text-xs md:text-sm text-gold-600 font-medium tracking-widest uppercase">
+                {config.tagline}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            <OrderBadge
+              orders={orders}
+              isDark={isDark}
+              isAdmin={isAdmin}
+              onOpenOrderList={onOpenOrderList}
+            />
+
+            <button
+              onClick={onThemeToggle}
+              className={`p-2 md:p-3 rounded-full transition-all duration-300 ${
+                isDark
+                  ? "bg-gold-700/20 hover:bg-gold-700/40 text-gold-400"
+                  : "bg-gold-100 hover:bg-gold-200 text-gold-700"
+              }`}
+              title={isDark ? "Light Mode" : "Dark Mode"}
+            >
+              {isDark ? (
+                <svg
+                  className="w-5 h-5 md:w-6 md:h-6"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5 md:w-6 md:h-6"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+              )}
+            </button>
+
+            {/* Desktop Navigation - Now using localized categories */}
+            <nav className="hidden md:flex items-center gap-1">
+              {localizedCategories.map((categoryName, index) => {
+                const originalCategory = categories[index];
+                return (
+                  <button
+                    key={originalCategory.name}
+                    onClick={() => onCategoryClick(originalCategory.name)}
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${
+                      activeCategory === originalCategory.name
+                        ? isDark
+                          ? "bg-gold-600 text-white"
+                          : "bg-gold-600 text-white"
+                        : isDark
+                          ? "text-gold-300 hover:bg-dark-card hover:text-gold-200"
+                          : "text-charcoal hover:bg-gold-100 hover:text-gold-700"
+                    }`}
+                  >
+                    {categoryName}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Language Toggle Button */}
+            <button
+              onClick={onLanguageToggle}
+              className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all duration-300 flex items-center gap-1 ${
+                isDark
+                  ? "bg-gold-700/20 text-gold-300 hover:bg-gold-700/40"
+                  : "bg-gold-100 text-charcoal hover:bg-gold-200"
+              }`}
+              title={
+                currentLang === "en"
+                  ? "Switch to Arabic"
+                  : "التبديل إلى الإنجليزية"
+              }
+            >
+              <span>{languages[currentLang === "en" ? "ar" : "en"].flag}</span>
+              <span>{currentLang === "en" ? "AR" : "EN"}</span>
+            </button>
+
+            {/* User Menu Button - Add this new section */}
+            {isAdminUser && (
+              <div className="relative user-menu-container">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className={`p-2 md:p-3 rounded-full transition-all duration-300 ${
+                    isDark
+                      ? "bg-gold-700/20 hover:bg-gold-700/40 text-gold-400"
+                      : "bg-gold-100 hover:bg-gold-200 text-gold-700"
+                  }`}
+                  title="User Menu"
+                >
+                  <svg
+                    className="w-5 h-5 md:w-6 md:h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div
+                    className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg overflow-hidden z-50 ${
+                      isDark
+                        ? "bg-dark-surface border border-gold-700/30"
+                        : "bg-gold-50 border border-gold-200"
+                    }`}
+                  >
+                    {/* Username */}
+                    <div
+                      className={`px-4 py-3 text-sm font-medium ${
+                        isDark
+                          ? "text-gold-300 border-b border-gold-700/30"
+                          : "text-charcoal border-b border-gold-100"
+                      }`}
+                    >
+                      Username: {window.__USERNAME__ || "User"}
+                    </div>
+
+                    {/* Logout Button */}
+                    <div className="p-3">
+                      <button
+                        onClick={() => {
+                          window.location.href = "/logout/";
+                        }}
+                        className="w-full px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium rounded"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isAdminUser && (
+              <button
+                onClick={onAdminToggle}
+                className={`px-3 py-2 md:px-4 md:py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  isAdmin
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : isDark
+                      ? "bg-gold-700/20 text-gold-300 hover:bg-gold-700/40"
+                      : "bg-gold-100 text-charcoal hover:bg-gold-200"
+                }`}
+              >
+                {isAdmin ? t.admin.exitAdminMode : "⚙️ Toggle View"}
+              </button>
+            )}
+          </div>
+        </div>
+        {/* Mobile Navigation - Now using localized categories */}
+        <nav className="md:hidden pb-4 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 min-w-max">
+            {localizedCategories.map((categoryName, index) => {
+              const originalCategory = categories[index];
+              return (
+                <button
+                  key={originalCategory.name}
+                  onClick={() => onCategoryClick(originalCategory.name)}
+                  className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all duration-300 ${
+                    activeCategory === originalCategory.name
+                      ? "bg-gold-600 text-white"
+                      : isDark
+                        ? "bg-dark-card text-gold-300 border border-gold-700/30"
+                        : "bg-white text-charcoal border border-gold-200 hover:border-gold-400"
+                  }`}
+                >
+                  {categoryName}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+
+================================================================================
+FILE: HeroSection.jsx
+PATH: HeroSection.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\HeroSection.jsx
+================================================================================
+
+const HeroSection = ({ config, isDark, t }) => (
+  <section
+    className={`relative py-16 md:py-24 lg:py-32 overflow-hidden transition-colors duration-300 ${
+      isDark
+        ? "bg-gradient-to-br from-dark-bg via-dark-surface to-dark-bg"
+        : "bg-gradient-to-br from-charcoal via-gray-900 to-charcoal"
+    } text-white hidden md:block`}
+  >
+    <div className="absolute inset-0 opacity-10">
+      <div className="absolute top-10 left-10 w-40 h-40 border border-gold-400 rounded-full"></div>
+      <div className="absolute bottom-10 right-10 w-60 h-60 border border-gold-400 rounded-full"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 border border-gold-400 rounded-full"></div>
+    </div>
+
+    <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p
+        className="text-gold-400 font-medium tracking-widest uppercase text-sm mb-4 fade-in"
+        style={{ opacity: 0, animationFillMode: "forwards" }}
+      >
+        {t.hero.welcome}
+      </p>
+      <h1
+        className="font-serif text-4xl md:text-5xl lg:text-7xl font-bold mb-6 fade-in-up"
+        style={{
+          opacity: 0,
+          animationFillMode: "forwards",
+          animationDelay: "0.1s",
+        }}
+      >
+        {config.restaurant_name}
+      </h1>
+      <div
+        className="w-24 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent mx-auto mb-6 fade-in"
+        style={{
+          opacity: 0,
+          animationFillMode: "forwards",
+          animationDelay: "0.2s",
+        }}
+      ></div>
+      <p
+        className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed fade-in-up"
+        style={{
+          opacity: 0,
+          animationFillMode: "forwards",
+          animationDelay: "0.3s",
+        }}
+      >
+        {t.hero.description}
+      </p>
+
+      <div
+        className="mt-10 flex flex-wrap justify-center gap-6 text-sm fade-in-up"
+        style={{
+          opacity: 0,
+          animationFillMode: "forwards",
+          animationDelay: "0.4s",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-gold-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span>{t.hero.hours}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-gold-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span>{t.hero.location}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-gold-500"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+          </svg>
+          <span>{t.hero.phone}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+export default HeroSection;
+
+================================================================================
+FILE: Logo.jsx
+PATH: Logo.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\Logo.jsx
+================================================================================
+
+// Logo Component
+const Logo = () => (
+  <svg viewBox="0 0 50 50" className="w-10 h-10 md:w-12 md:h-12">
+    <circle
+      cx="25"
+      cy="25"
+      r="23"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="text-gold-600"
+    />
+    <path
+      d="M15 20 Q25 10 35 20"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      className="text-gold-600"
+    />
+    <path
+      d="M15 30 Q25 40 35 30"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      className="text-gold-600"
+    />
+    <circle
+      cx="25"
+      cy="25"
+      r="3"
+      fill="currentColor"
+      className="text-gold-600"
+    />
+  </svg>
+);
+
+export default Logo;
+
+================================================================================
+FILE: Modal.jsx
+PATH: Modal.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\Modal.jsx
+================================================================================
+
+// Modal.jsx
+const Modal = ({ isOpen, title, isDark, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-end md:items-center justify-center overlay-fade"
+      onClick={onClose}
+    >
+      <div
+        className={`w-full md:max-w-3xl rounded-2xl shadow-2xl modal-enter overflow-hidden ${
+          isDark ? "bg-dark-surface" : "bg-gold-100"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxHeight: "calc(100vh - 80px)",
+          height: "fit-content",
+        }}
+      >
+        <div
+          className={`flex items-center justify-between px-6 md:px-8 py-2 md:pt-6 border-b sticky top-0 z-10 ${
+            isDark
+              ? "border-gold-700/30 bg-dark-surface"
+              : "border-gold-100 bg-gold-100"
+          }`}
+        >
+          <h3
+            className={`font-serif text-2xl font-semibold ${isDark ? "text-gold-300" : "text-charcoal"}`}
+          >
+            {title}
+          </h3>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-full transition-all duration-200 ${
+              isDark
+                ? "hover:bg-dark-card text-gold-400"
+                : "hover:bg-gold-100 text-charcoal"
+            }`}
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="overflow-y-auto px-4 md:px-6 py-4 max-h-[calc(100vh-180px)]">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+export default Modal;
+
+================================================================================
+FILE: OrderBadge.jsx
+PATH: OrderBadge.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\OrderBadge.jsx
+================================================================================
+
+import React from "react";
+
+const OrderBadge = ({ orders, isDark, isAdmin, onOpenOrderList }) => {
+  const totalItems = orders.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (totalItems === 0 || isAdmin) return null;
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={onOpenOrderList}
+        className={`relative p-2 md:p-3 rounded-full transition-all duration-300 ${
+          isDark
+            ? "bg-gold-700/20 hover:bg-gold-700/40 text-gold-400"
+            : "bg-gold-100 hover:bg-gold-200 text-gold-700"
+        }`}
+        title="View Orders"
+      >
+        <svg
+          className="w-5 h-5 text-gold-600"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+export default OrderBadge;
+
+================================================================================
+FILE: OrderListModal.jsx
+PATH: OrderListModal.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\OrderListModal.jsx
+================================================================================
+
+import Modal from "./Modal.jsx";
+import React from "react";
+
+const OrderListModal = ({
+  isOpen,
+  isDark,
+  orders,
+  onClose,
+  onUpdateQuantity,
+  onRemoveItem,
+  onFinalizeOrder,
+  t,
+}) => {
+  // محاسبه قیمت نهایی با استفاده از final_price
+  const getDiscountedPrice = (item) => {
+    if (
+      item.final_price !== undefined &&
+      item.final_price !== null &&
+      item.final_price !== "" &&
+      Number(item.final_price) >= 0
+    ) {
+      return Number(item.final_price);
+    }
+
+    const price = Number(item.price) || 0;
+    const discount = Number(item.discount) || 0;
+
+    if (discount > 0 && discount <= 100) {
+      return price * (1 - discount / 100);
+    }
+
+    return price;
+  };
+
+  const totalAmount = orders.reduce(
+    (sum, item) => sum + getDiscountedPrice(item) * item.quantity,
+    0,
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      title={t.order.yourOrders}
+      isDark={isDark}
+      onClose={onClose}
+    >
+      <div className="p-6 md:p-8">
+        {orders.length === 0 ? (
+          <div className="text-center py-8">
+            <p
+              className={`text-lg ${isDark ? "text-gray-400" : "text-gray-500"}`}
+            >
+              {t.order.noOrders}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4 max-h-96 overflow-y-auto mb-6">
+              {orders.map((order, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-row items-stretch rounded-lg transition-all ${
+                    isDark
+                      ? "bg-dark-bg border border-gold-700/30"
+                      : "bg-cream border border-gold-200"
+                  }`}
+                >
+                  <div className="w-32 h-32 rounded-l-lg overflow-hidden flex-shrink-0">
+                    {order.images?.[0] ? (
+                      <img
+                        src={order.images[0]}
+                        alt={order.name}
+                        className="w-32 h-32 object-cover"
+                      />
+                    ) : (
+                      <div
+                        className={`w-full h-full flex items-center justify-center ${
+                          isDark ? "bg-dark-surface" : "bg-gold-50"
+                        }`}
+                      >
+                        <svg
+                          className="w-8 h-8 text-gold-500"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 p-3 flex flex-col justify-between">
+                    <h4
+                      className={`font-semibold text-lg ${isDark ? "text-gold-300" : "text-charcoal"}`}
+                    >
+                      {order.name}
+                    </h4>
+                    <p
+                      className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                    >
+                      {getDiscountedPrice(order).toFixed(3)} {t.food.price}
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        onClick={() =>
+                          onUpdateQuantity(
+                            order.id,
+                            Math.max(1, order.quantity - 1),
+                          )
+                        }
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+                      >
+                        −
+                      </button>
+                      <span className="text-lg font-semibold w-8 text-center">
+                        {order.quantity}
+                      </span>
+                      <button
+                        onClick={() =>
+                          onUpdateQuantity(order.id, order.quantity + 1)
+                        }
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+                      >
+                        +
+                      </button>
+
+                      <button
+                        onClick={() => onRemoveItem(order.id)}
+                        className="ml-2 p-2 text-red-500 hover:text-red-700 transition-colors"
+                        title={t.order.removeItem}
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <span
+                  className={`text-lg font-semibold ${isDark ? "text-gold-300" : "text-charcoal"}`}
+                >
+                  {t.order.totalAmount}:
+                </span>
+                <span
+                  className={`text-2xl font-bold ${isDark ? "text-gold-400" : "text-gold-700"}`}
+                >
+                  {totalAmount.toFixed(3)} {t.food.price}
+                </span>
+              </div>
+
+              <button
+                onClick={onFinalizeOrder}
+                className="w-full py-3 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                {t.order.finalizeOrder}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
+export default OrderListModal;
+
+================================================================================
+FILE: OrderSideBar.jsx
+PATH: OrderSideBar.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\OrderSideBar.jsx
+================================================================================
+
+import React from "react";
+import { useLanguage } from "./i18n/LanguageContext.jsx";
+
+const OrderSidebar = ({
+  orders,
+  isDark,
+  onUpdateQuantity,
+  onRemoveItem,
+  onFinalizeOrder,
+  t,
+}) => {
+  const { isRTL } = useLanguage();
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const totalAmount = orders.reduce((sum, item) => {
+    const price = item.final_price
+      ? Number(item.final_price)
+      : Number(item.price) * (1 - (Number(item.discount) || 0) / 100);
+    return sum + price * item.quantity;
+  }, 0);
+
+  if (orders.length === 0) return null;
+
+  // نسخه موبایل: سایدبار با بک‌گراند ترنسپرنت
+  if (isMobile) {
+    return (
+      <div
+        className={`fixed z-40 ${
+          isRTL ? "right-0" : "left-0"
+        } top-[130px] bottom-0 w-[72px] flex flex-col ${isRTL ? "border-l-2 border-gold-400" : "border-r-2 border-gold-400"}`}
+      >
+        {/* بک‌گراند ترنسپرنت */}
+        <div
+          className={`absolute inset-0 backdrop-blur-xl ${
+            isDark ? "bg-dark-surface/60" : "bg-white/60"
+          } shadow-2xl`}
+        />
+
+        {/* محتوای سایدبار */}
+        <div className="relative flex flex-col h-full py-3">
+          {/* غذاها از بالا */}
+          <div className="flex-1 flex flex-col items-center gap-2 overflow-y-auto pt-2">
+            {orders.map((order) => (
+              <div key={order.id} className="relative flex-shrink-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gold-500 shadow-lg">
+                  {order.images?.[0] ? (
+                    <img
+                      src={order.images[0]}
+                      alt={order.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full flex items-center justify-center ${
+                        isDark ? "bg-dark-surface" : "bg-gold-100"
+                      }`}
+                    >
+                      <svg
+                        className="w-6 h-6 text-gold-500"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                {/* تعداد در پایین سمت چپ */}
+                <span className="absolute -bottom-1 -left-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                  {order.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* دکمه ثبت سفارش با تیک - پایین سایدبار */}
+          <div className="flex justify-center pb-2">
+            <button
+              onClick={onFinalizeOrder}
+              className="w-12 h-12 rounded-full bg-gold-600 hover:bg-gold-700 text-white shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // نسخه دسکتاپ: سایدبار کامل
+  return (
+    <div
+      className={`fixed top-0 h-full z-40 transition-all duration-300 ${
+        isRTL ? "right-0" : "left-0"
+      }`}
+      style={{ width: "380px", maxWidth: "100vw" }}
+    >
+      {/* Background blur overlay */}
+      <div
+        className={`absolute inset-0 backdrop-blur-md ${
+          isDark ? "bg-dark-surface/80" : "bg-white/80"
+        } ${isRTL ? "border-r" : "border-l"} ${
+          isDark ? "border-gold-700/30" : "border-gold-200"
+        }`}
+      />
+
+      {/* Content */}
+      <div className="relative h-full flex flex-col">
+        {/* Header */}
+        <div
+          className={`flex items-center justify-between p-4 border-b ${
+            isDark ? "border-gold-700/30" : "border-gold-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <svg
+              className="w-6 h-6 text-gold-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+            </svg>
+            <h3
+              className={`font-serif text-xl font-semibold ${
+                isDark ? "text-gold-300" : "text-charcoal"
+              }`}
+            >
+              {t.order.yourOrders || "Your Orders"}
+            </h3>
+            <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">
+              {orders.reduce((sum, item) => sum + item.quantity, 0)}
+            </span>
+          </div>
+        </div>
+
+        {/* Order Items */}
+        <div
+          className="overflow-y-auto flex-1"
+          style={{ paddingBottom: "100px" }}
+        >
+          <div className="p-4 space-y-4">
+            {orders.map((order) => {
+              const finalPrice = order.final_price
+                ? Number(order.final_price)
+                : Number(order.price) *
+                  (1 - (Number(order.discount) || 0) / 100);
+
+              return (
+                <div
+                  key={order.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 backdrop-blur-sm ${
+                    isDark
+                      ? "bg-dark-bg/50 hover:bg-dark-card/50"
+                      : "bg-cream/50 hover:bg-gold-50/50"
+                  }`}
+                >
+                  <div className="relative flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gold-500">
+                      {order.images?.[0] ? (
+                        <img
+                          src={order.images[0]}
+                          alt={order.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div
+                          className={`w-full h-full flex items-center justify-center ${
+                            isDark ? "bg-dark-surface" : "bg-gold-100"
+                          }`}
+                        >
+                          <svg
+                            className="w-8 h-8 text-gold-500"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
+                      {order.quantity}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className={`font-semibold text-sm truncate ${
+                        isDark ? "text-gold-300" : "text-charcoal"
+                      }`}
+                    >
+                      {order.name}
+                    </h4>
+                    <p
+                      className={`text-xs ${
+                        isDark ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      {finalPrice.toFixed(3)} {t.food.price}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        onUpdateQuantity(
+                          order.id,
+                          Math.max(1, order.quantity - 1),
+                        )
+                      }
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200/80 hover:bg-gray-300/80 text-sm font-bold transition-colors"
+                    >
+                      −
+                    </button>
+                    <button
+                      onClick={() =>
+                        onUpdateQuantity(order.id, order.quantity + 1)
+                      }
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200/80 hover:bg-gray-300/80 text-sm font-bold transition-colors"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => onRemoveItem(order.id)}
+                      className="ml-1 p-1 text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer با دکمه نهایی کردن */}
+        <div
+          className={`absolute bottom-0 left-0 right-0 p-4 border-t backdrop-blur-md ${
+            isDark
+              ? "border-gold-700/30 bg-dark-surface/80"
+              : "border-gold-200 bg-white/80"
+          }`}
+        >
+          <div className="flex justify-between items-center mb-3">
+            <span
+              className={`font-semibold ${
+                isDark ? "text-gold-300" : "text-charcoal"
+              }`}
+            >
+              {t.order.totalAmount || "Total"}:
+            </span>
+            <span
+              className={`text-xl font-bold ${
+                isDark ? "text-gold-400" : "text-gold-700"
+              }`}
+            >
+              {totalAmount.toFixed(3)} {t.food.price}
+            </span>
+          </div>
+
+          <button
+            onClick={onFinalizeOrder}
+            className="w-full py-3 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-95"
+          >
+            {t.order.finalizeOrder || "Finalize Order"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderSidebar;
+
+================================================================================
+FILE: Toast.jsx
+PATH: Toast.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\Toast.jsx
+================================================================================
+
+// Toast.jsx
+import React, { useState, useEffect } from "react";
+
+const Toast = ({ message, type, onClose }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
+  useEffect(() => {
+    // اگر message خالی باشد، toast را نمایش نده
+    if (!message || message.trim() === "") {
+      setIsVisible(false);
+      return;
+    }
+
+    // Hide after 3 seconds with fade out
+    const timer = setTimeout(() => {
+      setIsFadingOut(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        if (onClose) onClose();
+      }, 300); // Wait for fade out animation to complete
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [onClose, message]);
+
+  // اگر message وجود نداشته باشد یا خالی باشد، هیچ چیزی رندر نکن
+  if (!isVisible || !message || message.trim() === "") return null;
+
+  const getTypeStyles = () => {
+    switch (type) {
+      case "success":
+        return "bg-green-600";
+      case "error":
+        return "bg-red-600";
+      case "warning":
+        return "bg-yellow-600";
+      default:
+        return "bg-blue-600";
+    }
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case "success":
+        return (
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        );
+      case "error":
+        return (
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        );
+      default:
+        return (
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        );
+    }
+  };
+
+  return (
+    <div className="fixed top-6 right-6 z-500 max-w-md">
+      <div
+        className={`
+                    ${getTypeStyles()} 
+                    text-white px-6 py-4 rounded-xl shadow-2xl 
+                    flex items-center gap-3 
+                    ${isFadingOut ? "animate-fade-out-right" : "animate-slide-in-right"}
+                `}
+      >
+        <div className="flex-shrink-0">{getIcon()}</div>
+        <div className="flex-1">
+          <p className="font-medium">{message}</p>
+        </div>
+        <button
+          onClick={() => {
+            setIsFadingOut(true);
+            setTimeout(() => {
+              setIsVisible(false);
+              if (onClose) onClose();
+            }, 300);
+          }}
+          className="flex-shrink-0 hover:opacity-75 transition-opacity"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Toast;
+
+================================================================================
+FILE: ViewFoodModal.jsx
+PATH: ViewFoodModal.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\ViewFoodModal.jsx
+================================================================================
+
+import Modal from "./Modal.jsx";
+import FoodImage from "./FoodImage.jsx";
+import { useRef } from "react";
+
+const ViewFoodModal = ({
+  isOpen,
+  isDark,
+  item,
+  quantity,
+  setQuantity,
+  onOrder,
+  onClose,
+  t,
+}) => {
+  const scrollContainerRef = useRef(null);
+
+  const handleOrder = () => {
+    onOrder(item, quantity);
+    onClose();
+  };
+
+  const images = Array.isArray(item.images)
+    ? item.images
+    : item.images
+      ? [item.images]
+      : [];
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 300;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // محاسبه قیمت نهایی
+  const getFinalPrice = () => {
+    if (
+      item.final_price !== undefined &&
+      item.final_price !== null &&
+      item.final_price !== "" &&
+      Number(item.final_price) >= 0
+    ) {
+      return Number(item.final_price);
+    }
+
+    const price = Number(item.price) || 0;
+    const discount = Number(item.discount) || 0;
+
+    if (discount > 0 && discount <= 100) {
+      return price * (1 - discount / 100);
+    }
+
+    return price;
+  };
+
+  const finalPrice = getFinalPrice();
+  const originalPrice = Number(item.price) || 0;
+  const hasDiscount = finalPrice < originalPrice;
+
+  return (
+    <Modal isOpen={isOpen} isDark={isDark} onClose={onClose} title={item.name}>
+      <div className="relative px-6">
+        <div
+          ref={scrollContainerRef}
+          className={`relative overflow-x-auto overflow-y-hidden scroll-smooth`}
+          style={{ scrollbarWidth: "thin" }}
+        >
+          <div className="flex gap-3">
+            {images.length > 0 ? (
+              images.map((imgUrl, idx) => (
+                <div key={idx} className="w-64 h-64 flex-shrink-0">
+                  <img
+                    src={imgUrl}
+                    alt={`${item.name} - ${idx + 1}`}
+                    className="w-full h-full object-cover rounded-xl"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-64 h-64 flex-shrink-0 flex items-center justify-center p-10">
+                <FoodImage type={item.image} className="w-full h-full" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {images.length > 2 && (
+          <>
+            <button
+              onClick={() => scroll("left")}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 backdrop-blur-sm z-10"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 backdrop-blur-sm z-10"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {images.length > 1 && (
+          <div className="absolute bottom-4 right-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm z-10">
+            {images.length} photos
+          </div>
+        )}
+      </div>
+
+      <div className="p-6 space-y-4">
+        <h2
+          className={`font-serif text-3xl font-semibold ${
+            isDark ? "text-gold-300" : "text-charcoal"
+          }`}
+        >
+          {item.name}
+        </h2>
+        <p
+          className={`text-base leading-relaxed ${
+            isDark ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          {item.description}
+        </p>
+
+        {/* نمایش قیمت */}
+        {hasDiscount ? (
+          <div>
+            <span
+              dir="ltr"
+              className="font-serif text-xl text-gray-500 line-through"
+            >
+              {originalPrice.toFixed(3)} {t.food.price}
+            </span>
+            <br />
+            <span
+              dir="ltr"
+              className={`font-serif text-2xl font-semibold ${
+                isDark ? "text-gold-400" : "text-gold-700"
+              }`}
+            >
+              {finalPrice.toFixed(3)} {t.food.price}
+            </span>
+          </div>
+        ) : (
+          <span
+            dir="ltr"
+            className={`font-serif text-2xl font-semibold ${
+              isDark ? "text-gold-400" : "text-gold-700"
+            }`}
+          >
+            {finalPrice.toFixed(3)} {t.food.price}
+          </span>
+        )}
+
+        <div className="pt-4 border-t border-gold-300/20">
+          <p
+            className={`text-xs font-medium uppercase tracking-wider mb-2 ${
+              isDark ? "text-gold-400" : "text-gold-600"
+            }`}
+          >
+            {t.food.ingredients}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {item.ingredients?.map((ing, idx) => (
+              <span
+                key={idx}
+                className={`text-xs px-3 py-1 rounded-full ${
+                  isDark
+                    ? "bg-dark-surface text-gold-300"
+                    : "bg-cream text-charcoal"
+                }`}
+              >
+                {ing}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 border-t border-gold-300/20 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+          >
+            −
+          </button>
+          <span className="text-lg font-semibold w-8 text-center">
+            {quantity}
+          </span>
+          <button
+            onClick={() => setQuantity((q) => q + 1)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+          >
+            +
+          </button>
+        </div>
+
+        <button
+          onClick={handleOrder}
+          className={`px-5 py-2 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-[1.02]
+            ${isDark ? "bg-gold-500 hover:bg-gold-600" : "bg-gold-700 hover:bg-gold-800"}`}
+        >
+          {t.food.addToOrder}
+        </button>
+      </div>
+    </Modal>
+  );
+};
+
+export default ViewFoodModal;
+
+================================================================================
+FILE: categories.jsx
+PATH: categories.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\categories.jsx
+================================================================================
+
+import CategoryJsonData from "./categories.json";
+
+const categories = (() => {
+  const el = document.getElementById("categories-data");
+
+  try {
+    const data = el ? JSON.parse(el.textContent) : CategoryJsonData;
+
+    return data;
+  } catch (e) {
+    return CategoryJsonData;
+  }
+})();
+
+// Helper function to get category name based on language
+export const getCategoryName = (category, lang) => {
+  if (lang === "ar") {
+    return category.name_ar;
+  }
+  return category.name;
+};
+
+export default categories;
+
+================================================================================
+FILE: getCSRFToken.jsx
+PATH: getCSRFToken.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\getCSRFToken.jsx
+================================================================================
+
+const getCSRFToken = () =>
+  document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+export default getCSRFToken;
+
+================================================================================
+FILE: LanguageContext.jsx
+PATH: i18n\LanguageContext.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\i18n\LanguageContext.jsx
+================================================================================
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+const LanguageContext = createContext();
+
+export const languages = {
+  en: {
+    code: 'en',
+    name: 'English',
+    dir: 'ltr',
+    flag: '🇬🇧'
+  },
+  ar: {
+    code: 'ar',
+    name: 'العربية',
+    dir: 'rtl',
+    flag: '🇴🇲'
+  }
+};
+
+export const LanguageProvider = ({ children }) => {
+  const [currentLang, setCurrentLang] = useState(() => {
+    const saved = localStorage.getItem('app-language');
+    return saved || 'en';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('app-language', currentLang);
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = languages[currentLang].dir;
+  }, [currentLang]);
+
+  const toggleLanguage = () => {
+    setCurrentLang(prev => prev === 'en' ? 'ar' : 'en');
+  };
+
+  return (
+    <LanguageContext.Provider value={{ 
+      currentLang, 
+      setCurrentLang, 
+      toggleLanguage,
+      isRTL: currentLang === 'ar'
+    }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within LanguageProvider');
+  }
+  return context;
+};
+
+export default LanguageContext;
+
+================================================================================
+FILE: ar.js
+PATH: i18n\translations\ar.js
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\i18n\translations\ar.js
+================================================================================
+
+const ar = {
+  nav: {
+    home: "الرئيسية",
+    menu: "القائمة",
+    about: "عن المطعم",
+    contact: "اتصل بنا",
+  },
+  hero: {
+    welcome: "مرحباً بكم في",
+    tagline: "تناول فاخر",
+    description:
+      "استمتع برحلة طهي فنية مع قائمة مختارة بعناية، مصنوعة من أجود المكونات وإعداد دقيق.",
+    hours: "الثلاثاء - الأحد: 5:00 مساءً - 11:00 مساءً",
+    location: "مسقط، عمان",
+    phone: "+968 2222 3333",
+  },
+  categories: {
+    appetizers: "المقبلات",
+    mains: "الأطباق الرئيسية",
+    desserts: "الحلويات",
+    drinks: "المشروبات",
+  },
+  food: {
+    ingredients: "المكونات",
+    addToOrder: "أضف للطلب",
+    price: "ريال عماني",
+    discount: "خصم",
+  },
+  order: {
+    yourOrders: "طلباتك",
+    noOrders: "لا توجد طلبات بعد",
+    totalAmount: "المبلغ الإجمالي",
+    finalizeOrder: "تأكيد الطلب",
+    orderSuccess: "تم تأكيد الطلب بنجاح!",
+    totalItems: "إجمالي العناصر",
+    removeItem: "إزالة العنصر",
+  },
+  admin: {
+    adminMode: "وضع المسؤول",
+    exitAdminMode: "الخروج من وضع المسؤول",
+    addFood: "إضافة طبق",
+    editFood: "تعديل الطبق",
+    deleteFood: "حذف الطبق",
+    addCategory: "إضافة فئة جديدة",
+    editCategory: "تعديل الفئة",
+    deleteCategory: "حذف الفئة",
+    categoryName: "اسم الفئة",
+    foodName: "اسم الطبق",
+    description: "الوصف",
+    price: "السعر",
+    discountPercent: "نسبة الخصم",
+    images: "الصور",
+    currentImages: "الصور الحالية",
+    newImages: "صور جديدة",
+    save: "حفظ",
+    update: "تحديث",
+    cancel: "إلغاء",
+    deleteConfirm: "هل أنت متأكد من حذف",
+    warning:
+      "الوضع الإداري مفعل - يمكنك الآن إضافة وتعديل وحذف الأصناف والفئات",
+    ingredients: "المكونات",
+    addIngredient: "أضف مكون واضغط Enter",
+    selectCategory: "اختر الفئة",
+    imageHint: "يمكنك اختيار عدة صور مرة واحدة",
+  },
+  footer: {
+    about:
+      "حيث تلتقي التقاليد بالابتكار. كل طبق يحكي قصة من الشغف والدقة وأجود المكونات.",
+    openingHours: "ساعات العمل",
+    contact: "اتصل بنا",
+    address: "شارع المطاعم الفاخرة",
+    city: "مسقط، عمان 123456",
+    email: "reservations@lamaison.com",
+    rights: "جميع الحقوق محفوظة | مصنوع بشغف.",
+  },
+  common: {
+    loading: "جاري التحميل...",
+    save: "حفظ",
+    cancel: "إلغاء",
+    delete: "حذف",
+    edit: "تعديل",
+    add: "إضافة",
+    close: "إغلاق",
+  },
+  toast: {
+    orderSuccess: 'تم تسجيل طلبك بنجاح!',
+    orderFailed: 'فشل في تأكيد الطلب. يرجى المحاولة مرة أخرى.',
+    orderError: 'حدث خطأ أثناء تسجيل الطلب. يرجى المحاولة مرة أخرى.',
+    noOrders: 'يرجى إضافة عناصر إلى طلبك أولاً.',
+  },
+};
+
+export default ar;
+
+================================================================================
+FILE: en.js
+PATH: i18n\translations\en.js
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\i18n\translations\en.js
+================================================================================
+
+const en = {
+  nav: {
+    home: 'Home',
+    menu: 'Menu',
+    about: 'About',
+    contact: 'Contact',
+  },
+  hero: {
+    welcome: 'Welcome To',
+    tagline: 'Fine Dining',
+    description: 'Experience an artistic culinary journey with a carefully curated menu, crafted with the finest ingredients and meticulous preparation.',
+    hours: 'Tuesday - Sunday: 5:00 PM - 11:00 PM',
+    location: 'Muscat, Oman',
+    phone: '+968 2222 3333',
+  },
+  categories: {
+    appetizers: 'Appetizers',
+    mains: 'Main Courses',
+    desserts: 'Desserts',
+    drinks: 'Drinks',
+  },
+  food: {
+    ingredients: 'Ingredients',
+    addToOrder: 'Add to Order',
+    price: 'OMR',
+    discount: 'Discount',
+  },
+  order: {
+    yourOrders: 'Your Orders',
+    noOrders: 'No orders yet',
+    totalAmount: 'Total Amount',
+    finalizeOrder: 'Finalize Order',
+    orderSuccess: 'Order finalized successfully!',
+    totalItems: 'Total items',
+    removeItem: 'Remove item',
+  },
+  admin: {
+    adminMode: 'Admin Mode',
+    exitAdminMode: 'Exit Admin Mode',
+    addFood: 'Add Food',
+    editFood: 'Edit Food',
+    deleteFood: 'Delete Food',
+    addCategory: 'Add New Category',
+    editCategory: 'Edit Category',
+    deleteCategory: 'Delete Category',
+    categoryName: 'Category Name',
+    foodName: 'Dish Name',
+    description: 'Description',
+    price: 'Price',
+    discountPercent: 'Discount (%)',
+    images: 'Images',
+    currentImages: 'Current Images',
+    newImages: 'New Images',
+    save: 'Save',
+    update: 'Update',
+    cancel: 'Cancel',
+    deleteConfirm: 'Are you sure you want to delete',
+    warning: 'Admin mode is enabled - You can now add, edit, and delete items and categories',
+    ingredients: 'Ingredients',
+    addIngredient: 'Add ingredient and press enter',
+    selectCategory: 'Select Category',
+    imageHint: 'You can select multiple images at once',
+  },
+  footer: {
+    about: 'Where tradition meets innovation. Every dish tells a story of passion, precision, and the finest ingredients.',
+    openingHours: 'Opening Hours',
+    contact: 'Contact',
+    address: 'Fine Dining Street',
+    city: 'Muscat, Oman 123456',
+    email: 'reservations@lamaison.com',
+    rights: 'All rights reserved. | Crafted with passion.',
+  },
+  common: {
+    loading: 'Loading...',
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    edit: 'Edit',
+    add: 'Add',
+    close: 'Close',
+  },
+  toast: {
+    orderSuccess: 'Your order has been successfully placed!',
+    orderFailed: 'Failed to finalize order. Please try again.',
+    orderError: 'An error occurred while finalizing the order. Please try again.',
+    noOrders: 'Please add items to your order first.',
+  },
+};
+
+export default en;
+
+================================================================================
+FILE: index.js
+PATH: i18n\translations\index.js
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\i18n\translations\index.js
+================================================================================
+
+import en from './en';
+import ar from './ar';
+
+const translations = {
+  en,
+  ar
+};
+
+export default translations;
+
+================================================================================
+FILE: initialMenuData.jsx
+PATH: initialMenuData.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\initialMenuData.jsx
+================================================================================
+
+import FoodJsonData from "./foods.json";
+
+const initialMenuData = (() => {
+  const el = document.getElementById("menu-data");
+  try {
+    console.log("salam dadash chetori");
+    return el ? JSON.parse(el.textContent) : FoodJsonData;
+  } catch (e) {
+    console.log(e);
+    return FoodJsonData;
+  }
+})();
+
+// Helper function to get food data in the correct language
+// Helper function to get food data in the correct language
+export const getLocalizedFood = (food, lang = "en") => {
+  if (lang === "ar") {
+    return {
+      ...food,
+      name: food.name_ar || food.name,
+      description: food.description_ar || food.description,
+      ingredients: food.ingredients_ar || food.ingredients,
+      category: food.category_ar || food.category,
+      // final_price رو هم حفظ کن
+      final_price: food.final_price,
+    };
+  }
+  return {
+    ...food,
+    name: food.name,
+    description: food.description,
+    ingredients: food.ingredients,
+    category: food.category,
+    // final_price رو هم حفظ کن
+    final_price: food.final_price,
+  };
+};
+export default initialMenuData;
+
+================================================================================
+FILE: main.jsx
+PATH: main.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\main.jsx
+================================================================================
+
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+================================================================================
+FILE: postForm.jsx
+PATH: postForm.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\postForm.jsx
+================================================================================
+
+import getCSRFToken from "./getCSRFToken.jsx";
+
+async function postForm(url, formData) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCSRFToken(),
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Request failed");
+  }
+
+  return await res.json();
+}
+
+export default postForm;
+
+================================================================================
+FILE: postJSON.jsx
+PATH: postJSON.jsx
+FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\postJSON.jsx
+================================================================================
+
+import getCSRFToken from "./getCSRFToken.jsx";
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCSRFToken(),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Request failed");
+  }
+  return await res.json();
+}
+
+export default postJSON;

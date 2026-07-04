@@ -1,0 +1,517 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Restaurant</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Theme Variables */
+        :root {
+            --bg-gradient-start: #1a1a1a;
+            --bg-gradient-end: #2d2d2d;
+            --container-bg: #2d2d2d;
+            --container-border: rgba(201, 160, 71, 0.3);
+            --header-bg-start: #c9a047;
+            --header-bg-end: #b8893a;
+            --text-primary: white;
+            --text-secondary: rgba(255, 255, 255, 0.9);
+            --label-color: #e8d49d;
+            --input-bg: #1a1a1a;
+            --input-border: rgba(201, 160, 71, 0.3);
+            --input-border-focus: #c9a047;
+            --input-text: white;
+            --input-placeholder: #666;
+            --button-bg-start: #c9a047;
+            --button-bg-end: #b8893a;
+            --error-bg: rgba(220, 38, 38, 0.1);
+            --error-border: rgba(220, 38, 38, 0.3);
+            --error-text: #ef4444;
+            --footer-text: #888;
+            --link-color: #c9a047;
+            --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.2);
+            --tab-inactive: rgba(255, 255, 255, 0.05);
+            --tab-active-bg: var(--container-bg);
+            --tab-border: rgba(201, 160, 71, 0.3);
+        }
+
+        body.light-theme {
+            --bg-gradient-start: #f5f5f5;
+            --bg-gradient-end: #e8e8e8;
+            --container-bg: white;
+            --container-border: rgba(201, 160, 71, 0.2);
+            --header-bg-start: #d4a843;
+            --header-bg-end: #c49a3a;
+            --text-primary: #2d2d2d;
+            --text-secondary: #666;
+            --label-color: #b8893a;
+            --input-bg: #fafafa;
+            --input-border: #ddd;
+            --input-border-focus: #c9a047;
+            --input-text: #2d2d2d;
+            --input-placeholder: #999;
+            --button-bg-start: #c9a047;
+            --button-bg-end: #b8893a;
+            --error-bg: rgba(220, 38, 38, 0.05);
+            --error-border: rgba(220, 38, 38, 0.2);
+            --error-text: #dc2626;
+            --footer-text: #aaa;
+            --link-color: #b8893a;
+            --theme-toggle-bg: rgba(0, 0, 0, 0.05);
+            --theme-toggle-hover: rgba(0, 0, 0, 0.1);
+            --tab-inactive: #f0f0f0;
+            --tab-active-bg: white;
+            --tab-border: #ddd;
+        }
+
+        body {
+            font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--theme-toggle-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--container-border);
+            border-radius: 50px;
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: var(--theme-toggle-hover);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover svg {
+            transform: rotate(15deg);
+        }
+
+        .login-container {
+            background: var(--container-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            border: 1px solid var(--container-border);
+            transition: all 0.3s ease;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
+            padding: 40px 32px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo svg {
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+
+        .login-header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .login-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--tab-border);
+            background: var(--tab-inactive);
+            margin: 0;
+            padding: 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 14px 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--header-bg-start);
+            background: var(--tab-active-bg);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--header-bg-start);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 10px 32px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .login-body {
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: var(--label-color);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            color: var(--input-text);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--input-border-focus);
+            box-shadow: 0 0 0 3px rgba(201, 160, 71, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--input-placeholder);
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--button-bg-start) 0%, var(--button-bg-end) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(201, 160, 71, 0.3);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        /* Message containers with proper padding */
+        .messages-container {
+            padding: 0 32px 0 32px;
+            margin-top: 16px;
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            color: var(--error-text);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            color: #22c55e;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--footer-text);
+        }
+
+        .footer-links a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .demo-credentials {
+            text-align: center;
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--tab-inactive);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .demo-credentials code {
+            color: var(--header-bg-start);
+            font-weight: 600;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-container {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle">
+        <svg id="themeIcon" fill="currentColor" viewBox="0 0 20 20">
+            <path id="sunIcon" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707z"/>
+            <path id="moonIcon" style="display: none;" d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+        </svg>
+        <span id="themeText">Dark Mode</span>
+    </button>
+
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">
+                <svg viewBox="0 0 50 50" fill="currentColor">
+                    <circle cx="25" cy="25" r="23" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M15 20 Q25 10 35 20" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    <path d="M15 30 Q25 40 35 30" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    <circle cx="25" cy="25" r="3" fill="currentColor"/>
+                </svg>
+            </div>
+            <h1>Welcome Back</h1>
+            <p>Sign in to your account</p>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="admin">Admin</button>
+            <button class="tab" data-tab="customer">Customer</button>
+        </div>
+
+        <!-- Messages Container - Now with proper padding -->
+        {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        {% if message.tags != 'success' %}
+                            <div class="error-message">{{ message }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        <div class="login-body">
+            <!-- Admin Tab -->
+            <div class="tab-content active" id="tab-admin">
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_type" value="admin">
+                    
+                    <div class="form-group">
+                        <label for="admin_username">Username</label>
+                        <input type="text" id="admin_username" name="username" placeholder="Enter your username" required autofocus>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admin_password">Password</label>
+                        <input type="password" id="admin_password" name="password" placeholder="Enter your password" required>
+                    </div>
+                    
+                    <button type="submit">Sign In as Admin</button>
+                    
+                    <div class="demo-credentials">
+                        Demo: <code>admin</code> / <code>admin123</code>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Customer Tab -->
+            <div class="tab-content" id="tab-customer">
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_type" value="customer">
+                    
+                    <div class="form-group">
+                        <label for="customer_username">Username</label>
+                        <input type="text" id="customer_username" name="username" placeholder="Enter your username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer_password">Password</label>
+                        <input type="password" id="customer_password" name="password" placeholder="Enter your password" required>
+                    </div>
+                    
+                    <button type="submit">Sign In as Customer</button>
+                    
+                    <div class="footer-links">
+                        Don't have an account? <a href="{% url 'customer_register' %}">Register</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Show corresponding content
+                const tabId = this.dataset.tab;
+                document.getElementById('tab-' + tabId).classList.add('active');
+            });
+        });
+
+        // Theme Toggle Functionality
+        (function() {
+            const savedTheme = localStorage.getItem('login-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            let currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            
+            function applyTheme(theme) {
+                const body = document.body;
+                const themeIcon = document.getElementById('themeIcon');
+                const sunIcon = document.getElementById('sunIcon');
+                const moonIcon = document.getElementById('moonIcon');
+                const themeText = document.getElementById('themeText');
+                
+                if (theme === 'light') {
+                    body.classList.add('light-theme');
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    body.classList.remove('light-theme');
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                    themeText.textContent = 'Dark Mode';
+                }
+                
+                localStorage.setItem('login-theme', theme);
+                currentTheme = theme;
+            }
+            
+            applyTheme(currentTheme);
+            
+            const toggleBtn = document.getElementById('themeToggle');
+            toggleBtn.addEventListener('click', function() {
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+        })();
+
+        // Auto-focus first input when tab changes
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+                const content = document.getElementById('tab-' + tabId);
+                const firstInput = content.querySelector('input');
+                if (firstInput) {
+                    setTimeout(() => firstInput.focus(), 100);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

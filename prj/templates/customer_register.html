@@ -1,0 +1,424 @@
+<!-- templates/customer_register.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Registration - Restaurant</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #1a1a1a;
+            --bg-gradient-end: #2d2d2d;
+            --container-bg: #2d2d2d;
+            --container-border: rgba(201, 160, 71, 0.3);
+            --header-bg-start: #c9a047;
+            --header-bg-end: #b8893a;
+            --text-primary: white;
+            --text-secondary: rgba(255, 255, 255, 0.9);
+            --label-color: #e8d49d;
+            --input-bg: #1a1a1a;
+            --input-border: rgba(201, 160, 71, 0.3);
+            --input-border-focus: #c9a047;
+            --input-text: white;
+            --input-placeholder: #666;
+            --button-bg-start: #c9a047;
+            --button-bg-end: #b8893a;
+            --error-bg: rgba(220, 38, 38, 0.1);
+            --error-border: rgba(220, 38, 38, 0.3);
+            --error-text: #ef4444;
+            --success-bg: rgba(34, 197, 94, 0.1);
+            --success-border: rgba(34, 197, 94, 0.3);
+            --success-text: #22c55e;
+            --footer-text: #888;
+            --link-color: #c9a047;
+            --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+            --theme-toggle-hover: rgba(255, 255, 255, 0.2);
+        }
+
+        body.light-theme {
+            --bg-gradient-start: #f5f5f5;
+            --bg-gradient-end: #e8e8e8;
+            --container-bg: white;
+            --container-border: rgba(201, 160, 71, 0.2);
+            --header-bg-start: #d4a843;
+            --header-bg-end: #c49a3a;
+            --text-primary: #2d2d2d;
+            --text-secondary: #666;
+            --label-color: #b8893a;
+            --input-bg: #fafafa;
+            --input-border: #ddd;
+            --input-border-focus: #c9a047;
+            --input-text: #2d2d2d;
+            --input-placeholder: #999;
+            --button-bg-start: #c9a047;
+            --button-bg-end: #b8893a;
+            --error-bg: rgba(220, 38, 38, 0.05);
+            --error-border: rgba(220, 38, 38, 0.2);
+            --error-text: #dc2626;
+            --success-bg: rgba(34, 197, 94, 0.05);
+            --success-border: rgba(34, 197, 94, 0.2);
+            --success-text: #16a34a;
+            --footer-text: #aaa;
+            --link-color: #b8893a;
+            --theme-toggle-bg: rgba(0, 0, 0, 0.05);
+            --theme-toggle-hover: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--theme-toggle-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--container-border);
+            border-radius: 50px;
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            background: var(--theme-toggle-hover);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .register-container {
+            background: var(--container-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            border: 1px solid var(--container-border);
+            transition: all 0.3s ease;
+        }
+
+        .register-header {
+            background: linear-gradient(135deg, var(--header-bg-start) 0%, var(--header-bg-end) 100%);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .register-header h1 {
+            color: white;
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .register-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .register-body {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: var(--label-color);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            color: var(--input-text);
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--input-border-focus);
+            box-shadow: 0 0 0 3px rgba(201, 160, 71, 0.1);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--input-placeholder);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--button-bg-start) 0%, var(--button-bg-end) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 8px;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(201, 160, 71, 0.3);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: var(--error-text);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .success-message {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: var(--success-text);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--footer-text);
+        }
+
+        .footer-links a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .password-requirements {
+            font-size: 12px;
+            color: var(--footer-text);
+            margin-top: 4px;
+            padding-left: 4px;
+        }
+
+        .password-requirements ul {
+            list-style: none;
+            padding: 0;
+            margin: 4px 0 0 0;
+        }
+
+        .password-requirements ul li {
+            padding: 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .password-requirements ul li::before {
+            content: '•';
+            color: var(--header-bg-start);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .register-container {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Form row for two columns */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">
+        <svg id="themeIcon" fill="currentColor" viewBox="0 0 20 20">
+            <path id="sunIcon" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707z"/>
+            <path id="moonIcon" style="display: none;" d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+        </svg>
+        <span id="themeText">Dark Mode</span>
+    </button>
+
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Create Account</h1>
+            <p>Register as a customer to start ordering</p>
+        </div>
+
+        <div class="register-body">
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        <div class="success-message">{{ message }}</div>
+                    {% else %}
+                        <div class="error-message">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {% if form.errors %}
+                <div class="error-message">
+                    Please correct the errors below.
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Enter first username" value="{{ form.username.value|default:'' }}" required>
+                    </div>
+
+
+
+                <div class="form-group">
+                    <label for="password1">Password</label>
+                    <input type="password" id="password1" name="password1" placeholder="Create a password" required>
+                    <div class="password-requirements">
+                        <ul>
+                            <li>At least 8 characters</li>
+                            <li>At least one uppercase letter</li>
+                            <li>At least one number</li>
+                        </ul>
+                    </div>
+                    {% if form.password1.errors %}
+                        <div style="color: var(--error-text); font-size: 12px; margin-top: 4px;">
+                            {{ form.password1.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="password2">Confirm Password</label>
+                    <input type="password" id="password2" name="password2" placeholder="Confirm your password" required>
+                    {% if form.password2.errors %}
+                        <div style="color: var(--error-text); font-size: 12px; margin-top: 4px;">
+                            {{ form.password2.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit">Create Account</button>
+
+                <div class="footer-links">
+                    Already have an account? <a href="{% url 'login' %}">Sign In</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        (function() {
+            const savedTheme = localStorage.getItem('login-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            let currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            
+            function applyTheme(theme) {
+                const body = document.body;
+                const themeIcon = document.getElementById('themeIcon');
+                const sunIcon = document.getElementById('sunIcon');
+                const moonIcon = document.getElementById('moonIcon');
+                const themeText = document.getElementById('themeText');
+                
+                if (theme === 'light') {
+                    body.classList.add('light-theme');
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    body.classList.remove('light-theme');
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                    themeText.textContent = 'Dark Mode';
+                }
+                
+                localStorage.setItem('login-theme', theme);
+                currentTheme = theme;
+            }
+            
+            applyTheme(currentTheme);
+            
+            const toggleBtn = document.getElementById('themeToggle');
+            toggleBtn.addEventListener('click', function() {
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+        })();
+    </script>
+</body>
+</html>

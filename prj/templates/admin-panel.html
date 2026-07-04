@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/admin-panel.css' %}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-modern">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="navbar-icon">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <a class="navbar-brand-modern text-decoration-none" href="#">OrderHub Admin</a>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted d-none d-md-inline">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span id="admin-username">Admin</span>
+                    </span>
+                    <a href="/logout/" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="container">
+            <div class="header-section">
+                <h1 class="header-title">Order Management</h1>
+                <p class="header-subtitle">Track, manage, and update customer orders in real-time</p>
+            </div>
+
+            <div class="row stats-row g-3" id="stats-row"></div>
+
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+                <div class="input-group flex-grow-1" style="max-width: 350px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" id="search-input" class="form-control border-start-0 ps-0" placeholder="Search orders...">
+                </div>
+                <select id="status-filter" class="form-select" style="max-width: 200px;">
+                    <option value="all">All Statuses</option>
+                    <option value="not_started">Not Started</option>
+                    <option value="preparing">Preparing</option>
+                    <option value="finished">Finished</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="btn btn-outline-dark" onclick="refreshOrders()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </button>
+            </div>
+
+            <div id="orders-container">
+                <div id="loading-skeleton">
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <div class="skeleton" style="width: 120px; height: 30px;"></div>
+                            <div class="skeleton" style="width: 180px; height: 30px;"></div>
+                        </div>
+                        <div class="order-card-body">
+                            <div class="d-flex gap-3">
+                                <div class="skeleton" style="width: 90px; height: 90px; border-radius: 12px;"></div>
+                                <div class="skeleton" style="width: 90px; height: 90px; border-radius: 12px;"></div>
+                                <div class="skeleton" style="width: 90px; height: 90px; border-radius: 12px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📭</div>
+                    <p class="empty-state-text">No orders found</p>
+                    <p class="text-muted">Orders will appear here once customers place them.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/admin-panel.js' %}"></script>
+</body>
+</html>

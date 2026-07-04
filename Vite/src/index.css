@@ -1,0 +1,277 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: Cairo, system-ui, sans-serif;
+
+  --color-gold-50: #fdfcf7;
+  --color-gold-100: #f9f5e8;
+  --color-gold-200: #f1e6c5;
+  --color-gold-300: #e8d49d;
+  --color-gold-400: #dbb86d;
+  --color-gold-500: #c9a047;
+  --color-gold-600: #b8893a;
+  --color-gold-700: #996b31;
+  --color-gold-800: #7c562c;
+  --color-gold-900: #664728;
+
+  --color-cream: #faf8f3;
+  --color-charcoal: #2d2d2d;
+  --color-dark-bg: #1a1a1a;
+  --color-dark-surface: #2d2d2d;
+  --color-dark-card: #3a3a3a;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --header-height: 68px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 84px;
+  }
+}
+
+.sticky {
+  position: sticky;
+}
+
+.order-items-bar {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+@media (width<=640px) {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+body {
+  box-sizing: border-box;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+.fade-in {
+  animation: 0.6s ease-out forwards fadeIn;
+}
+.fade-in-up {
+  animation: 0.6s ease-out forwards fadeInUp;
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeInOverlay {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+.modal-enter {
+  animation: 0.3s ease-out forwards slideInUp;
+}
+.overlay-fade {
+  animation: 0.2s ease-out forwards fadeInOverlay;
+}
+.admin-overlay {
+  animation: 0.15s ease-out forwards fadeInOverlay;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* RTL Support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .font-serif {
+  font-family: "Playfair Display", "Noto Naskh Arabic", Georgia, serif;
+}
+
+[dir="rtl"] .font-sans {
+  font-family: "Cairo", system-ui, sans-serif;
+}
+
+[dir="rtl"] .ltr-only {
+  direction: ltr;
+  text-align: left;
+}
+
+/* RTL adjustments for specific components */
+[dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+[dir="rtl"] .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+/* Adjust margins and paddings for RTL */
+[dir="rtl"] .ml-2 {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+[dir="rtl"] .mr-2 {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-right: 1rem;
+  padding-left: 0;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-left: 1rem;
+  padding-right: 0;
+}
+
+/* RTL adjustments for buttons and icons */
+[dir="rtl"] .flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+/* RTL for modal and overlay */
+[dir="rtl"] .rounded-l-lg {
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+[dir="rtl"] .rounded-r-lg {
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* index.css - Add these animations */
+@keyframes fadeInCenter {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeOutCenter {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+.animate-fade-in-center {
+  animation: fadeInCenter 0.3s ease-out forwards;
+}
+
+.animate-fade-out-center {
+  animation: fadeOutCenter 0.3s ease-in forwards;
+}
+
+/* index.css - Add these animations */
+
+/* Slide in from right */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Fade out to right */
+@keyframes fadeOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out forwards;
+}
+
+.animate-fade-out-right {
+  animation: fadeOutRight 0.3s ease-in forwards;
+}

@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oman Restaurant</title>
+    <script type="module" crossorigin src="{% static 'js/index.js' %}"></script>
+    <link rel="stylesheet" crossorigin href="{% static 'css/index.css' %}">
+    <!-- <script type="module" src="{% static 'js/tailwind.js' %}"></script> -->
+  </head>
+  <body>
+
+     {% if toast_message %}
+    <div id="toast-container" 
+         data-message="{{ toast_message }}" 
+         data-type="{{ toast_type|default:'info' }}">
+    </div>
+    {% endif %}
+    <div id="root" class="h-full"></div>
+
+
+    <!-- In your Django template -->
+    <div id="categories-data" style="display: none;">{{ categories_data|safe }}</div>
+    <div id="menu-data" style="display: none;">{{ menu_data|safe }}</div>
+    <script>
+           // Pass toast data to React
+           window.__TOAST_DATA__ = {
+               message: "{{ toast_message|escapejs }}" || null,
+               type: "{{ toast_type|default:'info' }}" || 'info'
+           };
+       </script>
+    
+    <script>
+        // Set initial language
+        window.__INITIAL_LANG__ = '{{ request.GET.lang|default:"en" }}';
+        window.__IS_ADMIN_USER__ = {{ is_admin|yesno:"true,false" }};
+        window.__USERNAME__ = '{{ user.username }}';
+    </script>
+  </body>
+</html>

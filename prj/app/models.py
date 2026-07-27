@@ -88,35 +88,6 @@ class Food(models.Model):
             return self.ingredients_ar
         return self.ingredients
 
-class Customer(models.Model):
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='customer',
-        null=True,
-        blank=True
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Customer"
-        verbose_name_plural = "Customers"
-        ordering = ["-created_at"]
-    
-    def __str__(self):
-        return self.user.username if self.user else "No User"
-    
-    def get_total_orders(self):
-        return self.orders.count()
-    
-    def get_total_spent(self):
-        from django.db.models import Sum
-        total = self.orders.filter(
-            status='finished'
-        ).aggregate(total=Sum('total_amount'))['total']
-        return total or 0
-
 class OrderStatus(models.TextChoices):
     NOT_STARTED = 'not_started', 'Not Started'
     PREPARING = 'preparing', 'Preparing'
@@ -124,13 +95,18 @@ class OrderStatus(models.TextChoices):
     CANCELLED = 'cancelled', 'Cancelled'
 
 class Order(models.Model):
-    customer = models.ForeignKey(
-        Customer, 
-        on_delete=models.PROTECT, 
-        related_name="orders",
+    # Table or Takeaway information
+    table_number = models.CharField(
+        max_length=20,
+        blank=True,
         null=True,
-        blank=True
+        verbose_name="Table Number"
     )
+    is_takeaway = models.BooleanField(
+        default=False,
+        verbose_name="Takeaway"
+    )
+    
     date = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -157,8 +133,14 @@ class Order(models.Model):
         ordering = ['-date']
 
     def __str__(self):
-        customer_name = str(self.customer) if self.customer else "Guest"
-        return f"Order #{self.id} - {customer_name} - {self.date.strftime('%Y-%m-%d %H:%M')}"
+        if self.is_takeaway:
+            order_type = "Takeaway"
+        elif self.table_number:
+            order_type = f"Table {self.table_number}"
+        else:
+            order_type = "No Table"
+        
+        return f"Order #{self.id} - {order_type} - {self.date.strftime('%Y-%m-%d %H:%M')}"
     
     def get_status_display_ar(self):
         """Get Arabic status display"""

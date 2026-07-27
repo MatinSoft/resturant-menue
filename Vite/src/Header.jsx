@@ -163,67 +163,6 @@ const Header = ({
               <span>{currentLang === "en" ? "AR" : "EN"}</span>
             </button>
 
-            {/* User Menu Button - Add this new section */}
-            {isAdminUser && (
-              <div className="relative user-menu-container">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className={`p-2 md:p-3 rounded-full transition-all duration-300 ${
-                    isDark
-                      ? "bg-gold-700/20 hover:bg-gold-700/40 text-gold-400"
-                      : "bg-gold-100 hover:bg-gold-200 text-gold-700"
-                  }`}
-                  title="User Menu"
-                >
-                  <svg
-                    className="w-5 h-5 md:w-6 md:h-6"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-
-                {/* Dropdown Menu */}
-                {showUserMenu && (
-                  <div
-                    className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg overflow-hidden z-50 ${
-                      isDark
-                        ? "bg-dark-surface border border-gold-700/30"
-                        : "bg-gold-50 border border-gold-200"
-                    }`}
-                  >
-                    {/* Username */}
-                    <div
-                      className={`px-4 py-3 text-sm font-medium ${
-                        isDark
-                          ? "text-gold-300 border-b border-gold-700/30"
-                          : "text-charcoal border-b border-gold-100"
-                      }`}
-                    >
-                      Username: {window.__USERNAME__ || "User"}
-                    </div>
-
-                    {/* Logout Button */}
-                    <div className="p-3">
-                      <button
-                        onClick={() => {
-                          window.location.href = "/logout/";
-                        }}
-                        className="w-full px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 font-medium rounded"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {isAdminUser && (
               <button
                 onClick={onAdminToggle}

@@ -7,26 +7,15 @@ from django.contrib import admin
 from django.urls import path
 from django.shortcuts import redirect
 
-# Custom admin site
-# class CustomAdminSite(admin.AdminSite):
-#     def login(self, request, extra_context=None):
-#         # After admin login, redirect to menu-page
-#         from django.shortcuts import redirect
-#         response = super().login(request, extra_context)
-#         if request.user.is_authenticated:
-#             return redirect('menu-page')
-#         return response
-
-# Create custom admin site instance
-# admin_site = CustomAdminSite(name='myadmin')
-
 
 urlpatterns = [
-    path("", views.menu_page, name="menu-page"),
+
+    path("", views.home, name="home"),
+
+    path("menu", views.menu_page, name="menu-page"),
     # path('login/', admin_site.urls),  # Use custom admin
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('register/', views.customer_register, name='customer_register'),
 
     # Admin Order Management Page
     path('admin_panel/', views.admin_orders_page, name='admin-panel'),

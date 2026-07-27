@@ -16,21 +16,17 @@ from .models import *
 
 # views.py - Updated login_view and logout_view
 
+def home(request):
+    return render(request, 'index.html')
+
 @ensure_csrf_cookie
 @csrf_protect 
 def login_view(request):
     """Login page for both admin and customer access"""
     if request.user.is_authenticated:
-        # Check if user is admin or customer and redirect accordingly
-        if request.user.is_staff or request.user.is_superuser:
-            return redirect('menu-page')
-        elif hasattr(request.user, 'customer'):
-            return redirect('menu-page')
-        else:
-            return redirect('menu-page')
+        return redirect('menu-page')
     
     if request.method == 'POST':
-        user_type = request.POST.get('user_type', 'admin')
         username = request.POST.get('username')
         password = request.POST.get('password')
         
@@ -42,29 +38,15 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            if user_type == 'admin':
-                # Check if user has admin privileges
-                if user.is_staff or user.is_superuser:
-                    login(request, user)
-                    # Store success message in session for toast
-                    request.session['toast_message'] = f'Welcome back, {user.username}!'
-                    request.session['toast_type'] = 'success'
-                    return redirect('menu-page')
-                else:
-                    messages.error(request, 'You do not have admin privileges.')
-                    return render(request, 'login.html')
-            
-            elif user_type == 'customer':
-                # Check if user has a customer profile
-                if hasattr(user, 'customer'):
-                    login(request, user)
-                    # Store success message in session for toast
-                    request.session['toast_message'] = f'Welcome back, {user.username}!'
-                    request.session['toast_type'] = 'success'
-                    return redirect('menu-page')
-                else:
-                    messages.error(request, 'No customer profile found for this user.')
-                    return render(request, 'login.html')
+            # Check if user has admin privileges
+            if user.is_staff or user.is_superuser:
+                login(request, user)
+                request.session['toast_message'] = f'Welcome back, {user.username}!'
+                request.session['toast_type'] = 'success'
+                return redirect('menu-page')
+            else:
+                messages.error(request, 'You do not have admin privileges.')
+                return render(request, 'login.html')
         else:
             messages.error(request, 'Invalid username or password. Please try again.')
             return render(request, 'login.html')
@@ -79,66 +61,6 @@ def logout_view(request):
     request.session['toast_message'] = 'You have been logged out successfully.'
     request.session['toast_type'] = 'info'
     return redirect('menu-page')
-
-
-
-
-def customer_register(request):
-    if request.user.is_authenticated:
-        return redirect('menu-page')
-    
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-        
-        # Validation
-        if not username or not password1 or not password2:
-            messages.error(request, 'All fields are required.')
-            return render(request, 'customer_register.html')
-        
-        if password1 != password2:
-            messages.error(request, 'Passwords do not match.')
-            return render(request, 'customer_register.html')
-        
-        if len(password1) < 8:
-            messages.error(request, 'Password must be at least 8 characters.')
-            return render(request, 'customer_register.html')
-        
-        # Check if username already exists
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Username already taken. Please choose another.')
-            return render(request, 'customer_register.html')
-        
-        try:
-            # Create user
-            user = User.objects.create_user(
-                username=username,
-                password=password1,
-                is_staff=False,
-                is_superuser=False
-            )
-            
-            # Create customer profile
-            customer = Customer.objects.create(
-                user=user
-            )
-            
-            # Log the user in
-            login(request, user)
-            # Store success message in session for toast
-            request.session['toast_message'] = f'Account created successfully! Welcome {username}!'
-            request.session['toast_type'] = 'success'
-            return redirect('menu-page')
-            
-        except Exception as e:
-            messages.error(request, f'Registration failed: {str(e)}')
-            return render(request, 'customer_register.html')
-    
-    return render(request, 'customer_register.html')
-
-
-# views.py - Updated menu_page
 
 def menu_page(request):
     is_admin = request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)
@@ -186,7 +108,7 @@ def menu_page(request):
         "toast_message": toast_message,
         "toast_type": toast_type,
     }
-    return render(request, "index.html", context)
+    return render(request, "menu.html", context)
 
 def _read_json(request):
     try:
@@ -460,16 +382,23 @@ def api_food_delete(request):
     return JsonResponse({"ok": True, "deleted": True})
 
 @csrf_exempt
-@login_required
 @require_http_methods(["POST"])
+@login_required
+@staff_member_required
 def api_order_create(request):
     """
     Finalize order and save in Order model
-    Input: {'items': [{'id': 1, 'quantity': 2, 'name': 'Biryani', 'price': 2.500, 'discount': 10}, ...]}
+    Input: {
+        'items': [{'id': 1, 'quantity': 2, 'name': 'Biryani', 'price': 2.500, 'discount': 10}, ...],
+        'table_number': '5' or 'Takeaway',
+        'is_takeaway': true/false
+    }
     """
     try:
         data = json.loads(request.body)
         items_data = data.get('items', [])
+        table_number = data.get('table_number', None)
+        is_takeaway = data.get('is_takeaway', False)
         
         if not items_data:
             return JsonResponse({
@@ -529,19 +458,11 @@ def api_order_create(request):
             
             total_items += quantity
         
-        # Get or create customer
-        customer = None
-        if request.user.is_authenticated:
-            try:
-                customer = Customer.objects.get(user=request.user)
-            except Customer.DoesNotExist:
-                # Create customer profile if doesn't exist
-                customer = Customer.objects.create(user=request.user)
-        
-        # Create order
+        # Create order with table number or takeaway
         order = Order.objects.create(
-            customer=customer,
-            items=items_dict,  # Changed from foods to items
+            table_number=table_number,
+            is_takeaway=is_takeaway,
+            items=items_dict,
             total_items=total_items,
             total_amount=round(total_amount, 3),
             status=OrderStatus.NOT_STARTED,
@@ -567,41 +488,6 @@ def api_order_create(request):
             'success': False,
             'message': f'Error in order registration: {str(e)}'
         }, status=500)
-
-@login_required
-@csrf_exempt
-@require_http_methods(["GET"])
-def get_orders(request):
-    """Get list of orders (for management)"""
-    try:
-        orders = Order.objects.all()[:50]
-        
-        orders_list = []
-        for order in orders:
-            orders_list.append({
-                'id': order.id,
-                'date': order.date,
-                'foods': order.foods,
-                'total_items': sum(item.get('quantity', 0) for item in order.foods.values()),
-                'total_amount': sum(
-                    float(item.get('price', 0)) * item.get('quantity', 0) 
-                    for item in order.foods.values()
-                )
-            })
-        
-        return JsonResponse({
-            'success': True,
-            'orders': orders_list
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': str(e)
-        }, status=500)
-
-
-
 
 # ============================================
 # ADMIN ORDER MANAGEMENT VIEWS
@@ -650,8 +536,8 @@ def api_orders_list(request):
         page = int(request.GET.get('page', 1))
         limit = int(request.GET.get('limit', 50))
         
-        # Base queryset with related data
-        orders_queryset = Order.objects.select_related('customer', 'customer__user').all()
+        # Base queryset
+        orders_queryset = Order.objects.all()
         
         # Apply status filter
         if status_filter != 'all':
@@ -662,7 +548,7 @@ def api_orders_list(request):
             from django.db.models import Q
             orders_queryset = orders_queryset.filter(
                 Q(id__icontains=search_query) |
-                Q(customer__user__username__icontains=search_query) |
+                Q(table_number__icontains=search_query) |
                 Q(status__icontains=search_query) |
                 Q(notes__icontains=search_query)
             )
@@ -680,16 +566,6 @@ def api_orders_list(request):
         # Serialize orders
         orders_list = []
         for order in orders:
-            # Get customer info
-            customer_name = "Guest"
-            subscription_number = "N/A"
-            
-            if order.customer and order.customer.user:
-                customer_name = order.customer.user.username
-                subscription_number = f"SUB-{order.customer.id:04d}"
-            elif order.customer:
-                subscription_number = f"SUB-{order.customer.id:04d}"
-            
             # Format items with full details INCLUDING IMAGES
             items_dict = {}
             for food_id_str, item_data in order.items.items():
@@ -708,17 +584,17 @@ def api_orders_list(request):
                     'discount': item_data.get('discount', 0),
                     'category': item_data.get('category', ''),
                     'category_ar': item_data.get('category_ar', ''),
-                    'images': item_data.get('images', []),  # از JSON ذخیره شده
+                    'images': item_data.get('images', []),
                 }
                 
-                # حالا سعی کن از دیتابیس عکس واقعی غذا رو بگیری
+                # Try to get real food images from database
                 if food_id:
                     try:
                         food = Food.objects.only('images').get(id=food_id)
                         if food.images:
                             item_info['images'] = list(food.images)
                     except Food.DoesNotExist:
-                        pass  # از همون images ذخیره شده توی JSON استفاده کن
+                        pass
                 
                 items_dict[str(food_id_str)] = item_info
             
@@ -726,8 +602,8 @@ def api_orders_list(request):
                 'id': order.id,
                 'date': order.date.isoformat(),
                 'updated_at': order.updated_at.isoformat() if order.updated_at else None,
-                'customer_name': customer_name,
-                'subscription_number': subscription_number,
+                'table_number': order.table_number,
+                'is_takeaway': order.is_takeaway,
                 'status': order.status,
                 'items': items_dict,
                 'total_items': order.total_items,
@@ -828,17 +704,14 @@ def api_orders_stats(request):
         
         # Total counts
         total_orders = Order.objects.count()
-        total_customers = Customer.objects.count()
         
         # Orders by status
         status_counts = {}
         for status_choice in OrderStatus.choices:
+            count = Order.objects.filter(status=status_choice[0]).count()
             status_counts[status_choice[0]] = {
-                'count': Order.objects.filter(status=status_choice[0]).count(),
+                'count': count,
                 'label': status_choice[1],
-                'label_ar': Order.get_status_display_ar(
-                    Order(status=status_choice[0])
-                ) if hasattr(Order, 'get_status_display_ar') else status_choice[1]
             }
         
         # Active orders (not finished or cancelled)
@@ -867,7 +740,6 @@ def api_orders_stats(request):
             'success': True,
             'stats': {
                 'total_orders': total_orders,
-                'total_customers': total_customers,
                 'active_orders': active_orders,
                 'total_revenue': float(total_revenue),
                 'today_orders': today_orders,

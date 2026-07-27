@@ -1,3 +1,7 @@
+// FILE: ViewFoodModal.jsx
+// PATH: ViewFoodModal.jsx
+// FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\ViewFoodModal.jsx
+
 import Modal from "./Modal.jsx";
 import FoodImage from "./FoodImage.jsx";
 import { useRef } from "react";
@@ -13,6 +17,7 @@ const ViewFoodModal = ({
   t,
 }) => {
   const scrollContainerRef = useRef(null);
+  const isAdminUser = !!window.__IS_ADMIN_USER__;
 
   const handleOrder = () => {
     onOrder(item, quantity);
@@ -206,33 +211,36 @@ const ViewFoodModal = ({
         </div>
       </div>
 
-      <div className="p-6 border-t border-gold-300/20 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      {/* دکمه‌های سفارش - فقط برای ادمین‌ها نمایش داده شود */}
+      {isAdminUser && (
+        <div className="p-6 border-t border-gold-300/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+            >
+              −
+            </button>
+            <span className="text-lg font-semibold w-8 text-center">
+              {quantity}
+            </span>
+            <button
+              onClick={() => setQuantity((q) => q + 1)}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+            >
+              +
+            </button>
+          </div>
+
           <button
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+            onClick={handleOrder}
+            className={`px-5 py-2 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-[1.02]
+              ${isDark ? "bg-gold-500 hover:bg-gold-600" : "bg-gold-700 hover:bg-gold-800"}`}
           >
-            −
-          </button>
-          <span className="text-lg font-semibold w-8 text-center">
-            {quantity}
-          </span>
-          <button
-            onClick={() => setQuantity((q) => q + 1)}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold"
-          >
-            +
+            {t.food.addToOrder}
           </button>
         </div>
-
-        <button
-          onClick={handleOrder}
-          className={`px-5 py-2 rounded-xl font-semibold text-white transition-all duration-300 transform hover:scale-[1.02]
-            ${isDark ? "bg-gold-500 hover:bg-gold-600" : "bg-gold-700 hover:bg-gold-800"}`}
-        >
-          {t.food.addToOrder}
-        </button>
-      </div>
+      )}
     </Modal>
   );
 };

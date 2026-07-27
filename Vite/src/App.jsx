@@ -354,10 +354,11 @@ const AppContent = () => {
     );
   };
 
-  const handleFinalizeOrder = async () => {
+// FILE: App.jsx (فقط بخش handleFinalizeOrder تغییر کرده)
+  const handleFinalizeOrder = async (orderMeta = {}) => {
     if (orders.length === 0) {
       setToastData({
-        message: t.toast.noOrders, // استفاده از ترجمه
+        message: t.toast.noOrders,
         type: "warning",
       });
       return;
@@ -386,6 +387,8 @@ const AppContent = () => {
         (sum, item) => sum + getDiscountedPrice(item) * item.quantity,
         0,
       ),
+      table_number: orderMeta.tableNumber || null,
+      is_takeaway: orderMeta.isTakeaway || false,
     };
 
     try {
@@ -393,25 +396,26 @@ const AppContent = () => {
 
       if (response.success) {
         setToastData({
-          message: t.toast.orderSuccess, // استفاده از ترجمه
+          message: t.toast.orderSuccess,
           type: "success",
         });
         setOrders([]);
         setOrderListModalOpen(false);
       } else {
         setToastData({
-          message: response.message || t.toast.orderFailed, // استفاده از ترجمه
+          message: response.message || t.toast.orderFailed,
           type: "error",
         });
       }
     } catch (error) {
       console.error("Error finalizing order:", error);
       setToastData({
-        message: t.toast.orderError, // استفاده از ترجمه
+        message: t.toast.orderError,
         type: "error",
       });
     }
   };
+  
   const handleOpenOrderList = () => {
     setOrderListModalOpen(true);
   };
@@ -487,7 +491,7 @@ const AppContent = () => {
         currentLang={currentLang}
         onLanguageToggle={toggleLanguage}
       />
-      <HeroSection config={config} isDark={isDark} t={t} />
+      {/* <HeroSection config={config} isDark={isDark} t={t} /> */}
       <main className="max-w-6xl mx-auto pl-4 sm:px-6 lg:pl-8 py-2 md:py-10 lg:py-12">
         {" "}
         {canAdmin && (
@@ -622,7 +626,7 @@ const AppContent = () => {
         onFinalizeOrder={handleFinalizeOrder}
         t={t}
       />
-      <Footer config={config} isDark={isDark} t={t} />
+      {/* <Footer config={config} isDark={isDark} t={t} /> */}
     </div>
   );
 };

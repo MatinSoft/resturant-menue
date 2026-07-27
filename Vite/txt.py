@@ -3,7 +3,7 @@ import glob
 
 def collect_code_files(directory_path, output_file="combined_code.txt", extensions=None):
     if extensions is None:
-        extensions = ['.jsx', '.js']
+        extensions = ['.jsx', '.js', 'py']
     
     directory_path = os.path.abspath(directory_path)
     

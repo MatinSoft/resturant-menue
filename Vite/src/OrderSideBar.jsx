@@ -1,3 +1,7 @@
+// FILE: OrderSideBar.jsx
+// PATH: OrderSideBar.jsx
+// FULL PATH: E:\Django Projects\Oman Restaurant\Vite\src\OrderSideBar.jsx
+
 import React from "react";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
 
@@ -11,6 +15,8 @@ const OrderSidebar = ({
 }) => {
   const { isRTL } = useLanguage();
   const [isMobile, setIsMobile] = React.useState(false);
+  const [tableNumber, setTableNumber] = React.useState("");
+  const [isTakeaway, setIsTakeaway] = React.useState(false);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -29,27 +35,63 @@ const OrderSidebar = ({
     return sum + price * item.quantity;
   }, 0);
 
+  const handleFinalizeOrder = () => {
+    onFinalizeOrder({
+      tableNumber: isTakeaway ? "Takeaway" : tableNumber,
+      isTakeaway,
+    });
+  };
+
+  // Effect برای اضافه کردن padding به main content در موبایل
+  React.useEffect(() => {
+    if (isMobile && orders.length > 0) {
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        if (isRTL) {
+          mainContent.style.paddingRight = '80px';
+          mainContent.style.paddingLeft = '';
+        } else {
+          mainContent.style.paddingLeft = '80px';
+          mainContent.style.paddingRight = '';
+        }
+      }
+    } else if (isMobile) {
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        mainContent.style.paddingLeft = '';
+        mainContent.style.paddingRight = '';
+      }
+    }
+
+    return () => {
+      if (isMobile) {
+        const mainContent = document.querySelector('main');
+        if (mainContent) {
+          mainContent.style.paddingLeft = '';
+          mainContent.style.paddingRight = '';
+        }
+      }
+    };
+  }, [isMobile, orders.length, isRTL]);
+
   if (orders.length === 0) return null;
 
-  // نسخه موبایل: سایدبار با بک‌گراند ترنسپرنت
+  // نسخه موبایل: سایدبار عمودی
   if (isMobile) {
     return (
       <div
         className={`fixed z-40 ${
           isRTL ? "right-0" : "left-0"
-        } top-[130px] bottom-0 w-[72px] flex flex-col ${isRTL ? "border-l-2 border-gold-400" : "border-r-2 border-gold-400"}`}
+        } top-[130px] bottom-0 w-[72px] flex flex-col ${
+          isDark
+            ? "bg-dark-surface border-gold-700/30"
+            : "bg-white border-gold-200"
+        } ${isRTL ? "border-l-2" : "border-r-2"} shadow-xl`}
       >
-        {/* بک‌گراند ترنسپرنت */}
-        <div
-          className={`absolute inset-0 backdrop-blur-xl ${
-            isDark ? "bg-dark-surface/60" : "bg-white/60"
-          } shadow-2xl`}
-        />
-
         {/* محتوای سایدبار */}
-        <div className="relative flex flex-col h-full py-3">
+        <div className="flex flex-col h-full py-3">
           {/* غذاها از بالا */}
-          <div className="flex-1 flex flex-col items-center gap-2 overflow-y-auto pt-2">
+          <div className="flex-1 flex flex-col items-center gap-3 overflow-y-auto pt-2">
             {orders.map((order) => (
               <div key={order.id} className="relative flex-shrink-0">
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gold-500 shadow-lg">
@@ -62,7 +104,7 @@ const OrderSidebar = ({
                   ) : (
                     <div
                       className={`w-full h-full flex items-center justify-center ${
-                        isDark ? "bg-dark-surface" : "bg-gold-100"
+                        isDark ? "bg-dark-bg" : "bg-gold-100"
                       }`}
                     >
                       <svg
@@ -79,18 +121,110 @@ const OrderSidebar = ({
                     </div>
                   )}
                 </div>
-                {/* تعداد در پایین سمت چپ */}
+                
+                {/* Badge تعداد - پایین سمت چپ */}
                 <span className="absolute -bottom-1 -left-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
                   {order.quantity}
                 </span>
+
+                {/* Badge افزایش - بالای سمت راست */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateQuantity(order.id, order.quantity + 1);
+                  }}
+                  className="absolute -top-1 -right-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg transition-colors"
+                >
+                  +
+                </button>
+
+                {/* Badge کاهش - بالای سمت چپ */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateQuantity(order.id, Math.max(1, order.quantity - 1));
+                  }}
+                  className="absolute -top-1 -left-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg transition-colors"
+                >
+                  −
+                </button>
+
+                {/* Badge حذف - پایین سمت راست */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveItem(order.id);
+                  }}
+                  className="absolute -bottom-1 -right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-lg transition-colors"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
             ))}
           </div>
 
+          {/* چک‌باکس Takeaway - موبایل */}
+          <div className="flex flex-col items-center gap-1 px-2">
+            <label
+              htmlFor="takeaway-mobile"
+              className={`text-[9px] font-medium cursor-pointer select-none leading-none ${
+                isDark ? "text-gold-300" : "text-charcoal"
+              }`}
+            >
+              {t.order.takeaway || "Takeaway"}
+            </label>
+            <input
+              type="checkbox"
+              id="takeaway-mobile"
+              checked={isTakeaway}
+              onChange={(e) => setIsTakeaway(e.target.checked)}
+              className="w-4 h-4 accent-gold-500 cursor-pointer"
+            />
+          </div>
+
+          {/* Input شماره میز - فقط وقتی Takeaway غیرفعال است */}
+          {!isTakeaway && (
+            <div className="flex flex-col items-center gap-1 px-2 mt-1">
+              <label
+                htmlFor="table-number-mobile"
+                className={`text-[9px] font-medium cursor-pointer select-none leading-none ${
+                  isDark ? "text-gold-300" : "text-charcoal"
+                }`}
+              >
+                {t.order.tableNumber || "Table"}
+              </label>
+              <input
+                type="number"
+                id="table-number-mobile"
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                placeholder="#"
+                className={`w-full px-1.5 py-1 rounded-md border text-[10px] text-center transition-all duration-200 ${
+                  isDark
+                    ? "bg-dark-bg border-gold-700/30 text-white placeholder-gray-500 focus:border-gold-500"
+                    : "bg-white border-gold-200 text-charcoal placeholder-gray-400 focus:border-gold-500"
+                } focus:outline-none`}
+                min="1"
+              />
+            </div>
+          )}
+
           {/* دکمه ثبت سفارش با تیک - پایین سایدبار */}
-          <div className="flex justify-center pb-2">
+          <div className="flex justify-center pt-1.5 pb-2">
             <button
-              onClick={onFinalizeOrder}
+              onClick={handleFinalizeOrder}
               className="w-12 h-12 rounded-full bg-gold-600 hover:bg-gold-700 text-white shadow-lg flex items-center justify-center transition-all duration-300 active:scale-95"
             >
               <svg
@@ -164,7 +298,7 @@ const OrderSidebar = ({
           className="overflow-y-auto flex-1"
           style={{ paddingBottom: "100px" }}
         >
-          <div className="p-4 space-y-4">
+          <div className="p-4 ">
             {orders.map((order) => {
               const finalPrice = order.final_price
                 ? Number(order.final_price)
@@ -174,10 +308,10 @@ const OrderSidebar = ({
               return (
                 <div
                   key={order.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 backdrop-blur-sm ${
+                  className={`flex items-center gap-3 p-3 transition-all duration-200 backdrop-blur-sm border-b border-gold-500 ${
                     isDark
-                      ? "bg-dark-bg/50 hover:bg-dark-card/50"
-                      : "bg-cream/50 hover:bg-gold-50/50"
+                      ? "hover:bg-dark-card/50"
+                      : "hover:bg-gold-50/50"
                   }`}
                 >
                   <div className="relative flex-shrink-0">
@@ -283,6 +417,42 @@ const OrderSidebar = ({
               : "border-gold-200 bg-white/80"
           }`}
         >
+          {/* Table number input و checkbox - دسکتاپ */}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                id="takeaway-desktop"
+                checked={isTakeaway}
+                onChange={(e) => setIsTakeaway(e.target.checked)}
+                className="w-4 h-4 accent-gold-500 cursor-pointer"
+              />
+              <label
+                htmlFor="takeaway-desktop"
+                className={`text-sm font-medium cursor-pointer select-none ${
+                  isDark ? "text-gold-300" : "text-charcoal"
+                }`}
+              >
+                {t.order.takeaway || "Takeaway"}
+              </label>
+            </div>
+            
+            {!isTakeaway && (
+              <input
+                type="number"
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                placeholder={t.order.tableNumber || "Table Number"}
+                className={`w-full px-3 py-2 rounded-lg border text-sm transition-all duration-200 ${
+                  isDark
+                    ? "bg-dark-bg border-gold-700/30 text-white placeholder-gray-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20"
+                    : "bg-white border-gold-200 text-charcoal placeholder-gray-400 focus:border-gold-500 focus:ring-1 focus:ring-gold-500/20"
+                } focus:outline-none`}
+                min="1"
+              />
+            )}
+          </div>
+
           <div className="flex justify-between items-center mb-3">
             <span
               className={`font-semibold ${
@@ -301,7 +471,7 @@ const OrderSidebar = ({
           </div>
 
           <button
-            onClick={onFinalizeOrder}
+            onClick={handleFinalizeOrder}
             className="w-full py-3 bg-gold-600 hover:bg-gold-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-95"
           >
             {t.order.finalizeOrder || "Finalize Order"}

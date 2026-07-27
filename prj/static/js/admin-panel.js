@@ -175,8 +175,7 @@ function filterOrders() {
     if (s) {
       const txt = [
         `#${o.id}`,
-        o.customer_name || "",
-        o.subscription_number || "",
+        o.table_number || "",
         o.status || "",
         o.notes || "",
         ...Object.values(o.items || {}).flatMap((i) => [
@@ -256,12 +255,16 @@ function formatCurrency(a) {
   return isNaN(n) ? "0.000" : n.toFixed(3);
 }
 
-function getInitials(name) {
-  if (!name || name === "Guest" || name === "Guest User") return "?";
-  const p = name.trim().split(/\s+/);
-  return p.length === 1
-    ? p[0][0].toUpperCase()
-    : (p[0][0] + p[p.length - 1][0]).toUpperCase();
+function getOrderTypeDisplay(order) {
+  if (order.is_takeaway) return "Takeaway";
+  if (order.table_number) return `Table ${order.table_number}`;
+  return "No Table";
+}
+
+function getOrderTypeIcon(order) {
+  if (order.is_takeaway) return "bi-bag";
+  if (order.table_number) return "bi-table";
+  return "bi-question-circle";
 }
 
 function escapeHtml(t) {
@@ -312,8 +315,8 @@ function renderOrders() {
       const sc = getStatusClass(order.status);
       const si = getStatusIcon(order.status);
       const sd = getStatusDisplay(order.status);
-      const cn = order.customer_name || "Guest";
-      const sn = order.subscription_number || "N/A";
+      const ot = getOrderTypeDisplay(order);
+      const oi = getOrderTypeIcon(order);
 
       const foodsHTML = Object.entries(order.items || {})
         .map(([fid, item]) => {
@@ -343,8 +346,8 @@ function renderOrders() {
                         <span class="order-date"><i class="bi bi-calendar3"></i>${formatDate(order.date)}</span>
                     </div>
                     <div class="order-user-section">
-                        <div class="user-avatar">${getInitials(cn)}</div>
-                        <div class="user-info"><span class="user-name">${escapeHtml(cn)}</span><span class="user-subscription"><i class="bi bi-person-badge me-1"></i>${escapeHtml(sn)}</span></div>
+                        <div class="user-avatar"><i class="bi ${oi}"></i></div>
+                        <div class="user-info"><span class="user-name">${escapeHtml(ot)}</span></div>
                     </div>
                     <span class="status-badge ${sc}"><i class="bi ${si}"></i>${sd}</span>
                 </div>
